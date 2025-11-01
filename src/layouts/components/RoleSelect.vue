@@ -35,7 +35,7 @@
 </template>
 
 <script setup>
-import api from '@/api'
+// import api from '@/api'
 import { MeModal } from '@/components'
 import { useModal } from '@/composables'
 import { useAuthStore, useUserStore } from '@/store'
@@ -56,8 +56,15 @@ function open(options) {
 async function setCurrentRole() {
   try {
     okLoading.value = true
-    const { data } = await api.switchCurrentRole(roleCode.value)
-    await authStore.switchCurrentRole(data)
+    // 移除接口调用，直接前端切换角色
+    // 找到选中的角色信息
+    const selectedRole = roles.value.find(r => r.code === roleCode.value)
+    if (selectedRole) {
+      // 更新用户信息中的当前角色
+      userStore.userInfo.currentRole = selectedRole
+      // 模拟切换角色的 token 数据
+      await authStore.switchCurrentRole({ accessToken: authStore.accessToken })
+    }
     okLoading.value = false
     $message.success('切换成功')
     modalRef.value?.handleOk()
@@ -70,7 +77,7 @@ async function setCurrentRole() {
 }
 
 async function logout() {
-  await api.logout()
+  // 移除接口调用，直接前端退出
   authStore.logout()
   modalRef.value?.close()
   $message.success('已退出登录')

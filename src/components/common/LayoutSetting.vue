@@ -80,6 +80,92 @@
       <p class="mt-16 opacity-50">
         注: 此设置仅对未设置layout或者设置成跟随系统的页面有效，菜单设置的layout优先级最高
       </p>
+
+      <n-divider />
+
+      <div class="mb-12">
+        <span class="font-bold">主题切换动画</span>
+      </div>
+      <n-space justify="center" :size="16">
+        <div class="flex-col cursor-pointer items-center justify-center" @click="appStore.setThemeAnimationType('horizontal')">
+          <div class="flex items-center justify-center" style="width: 70px; height: 60px;">
+            <i class="i-fe:arrow-right text-28 text-primary" />
+          </div>
+          <n-button
+            class="mt-6"
+            size="small"
+            :type="appStore.themeAnimationType === 'horizontal' ? 'primary' : ''"
+            ghost
+          >
+            横切
+          </n-button>
+        </div>
+        <div class="flex-col cursor-pointer items-center justify-center" @click="appStore.setThemeAnimationType('circle')">
+          <div class="flex items-center justify-center" style="width: 70px; height: 60px;">
+            <i class="i-fe:circle text-28 text-primary" />
+          </div>
+          <n-button
+            class="mt-6"
+            size="small"
+            :type="appStore.themeAnimationType === 'circle' ? 'primary' : ''"
+            ghost
+          >
+            圆形
+          </n-button>
+        </div>
+        <div class="flex-col cursor-pointer items-center justify-center" @click="appStore.setThemeAnimationType('explode')">
+          <div class="flex items-center justify-center" style="width: 70px; height: 60px;">
+            <i class="i-fe:zap text-28 text-primary" />
+          </div>
+          <n-button
+            class="mt-6"
+            size="small"
+            :type="appStore.themeAnimationType === 'explode' ? 'primary' : ''"
+            ghost
+          >
+            爆炸
+          </n-button>
+        </div>
+        <div class="flex-col cursor-pointer items-center justify-center" @click="appStore.setThemeAnimationType('corners')">
+          <div class="flex items-center justify-center" style="width: 70px; height: 60px;">
+            <i class="i-fe:maximize text-28 text-primary" />
+          </div>
+          <n-button
+            class="mt-6"
+            size="small"
+            :type="appStore.themeAnimationType === 'corners' ? 'primary' : ''"
+            ghost
+          >
+            四角
+          </n-button>
+        </div>
+        <div class="flex-col cursor-pointer items-center justify-center" @click="appStore.setThemeAnimationType('diamond')">
+          <div class="flex items-center justify-center" style="width: 70px; height: 60px;">
+            <i class="i-fe:octagon text-28 text-primary" />
+          </div>
+          <n-button
+            class="mt-6"
+            size="small"
+            :type="appStore.themeAnimationType === 'diamond' ? 'primary' : ''"
+            ghost
+          >
+            菱形
+          </n-button>
+        </div>
+        <div class="flex-col cursor-pointer items-center justify-center" @click="appStore.setThemeAnimationType('split')">
+          <div class="flex items-center justify-center" style="width: 70px; height: 60px;">
+            <i class="i-fe:git-commit text-28 text-primary" />
+          </div>
+          <n-button
+            class="mt-6"
+            size="small"
+            :type="appStore.themeAnimationType === 'split' ? 'primary' : ''"
+            ghost
+          >
+            分屏
+          </n-button>
+        </div>
+      </n-space>
     </MeModal>
   </div>
 </template>

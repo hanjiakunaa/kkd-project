@@ -1,31 +1,208 @@
-import { cloneDeep } from 'lodash-es'
-import api from '@/api'
-import { basePermissions } from '@/settings'
+// import api from '@/api'
 
+// 前端写死的用户信息
 export async function getUserInfo() {
-  const res = await api.getUser()
-  const { id, username, profile, roles, currentRole } = res.data || {}
   return {
-    id,
-    username,
-    avatar: profile?.avatar,
-    nickName: profile?.nickName,
-    gender: profile?.gender,
-    address: profile?.address,
-    email: profile?.email,
-    roles,
-    currentRole,
+    id: 1,
+    username: 'admin',
+    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=admin',
+    nickName: '管理员',
+    gender: 1,
+    address: '中国',
+    email: 'admin@example.com',
+    roles: [
+      {
+        id: 1,
+        code: 'ADMIN',
+        name: '管理员',
+      },
+      {
+        id: 2,
+        code: 'USER',
+        name: '普通用户',
+      },
+    ],
+    currentRole: {
+      id: 1,
+      code: 'ADMIN',
+      name: '管理员',
+    },
   }
 }
 
+// 前端写死的路由权限数据
 export async function getPermissions() {
-  let asyncPermissions = []
-  try {
-    const res = await api.getRolePermissions()
-    asyncPermissions = res?.data || []
-  }
-  catch (error) {
-    console.error(error)
-  }
-  return cloneDeep(basePermissions).concat(asyncPermissions)
+  return [
+    {
+      id: 1,
+      code: 'home',
+      name: '首页',
+      type: 'MENU',
+      path: '/',
+      component: '/src/views/home/index.vue',
+      icon: 'co-adobe-after-effects',
+      order: 0,
+      enable: true,
+      show: true,
+      keepAlive: false,
+    },
+    {
+      id: 2,
+      code: 'base',
+      name: '基础功能',
+      type: 'MENU',
+      path: '/base',
+      component: '/src/views/base/index.vue',
+      icon: 'fa-th-large',
+      order: 1,
+      enable: true,
+      show: true,
+      keepAlive: false,
+      children: [
+        {
+          id: 21,
+          code: 'base-unocss',
+          name: 'UnoCSS',
+          type: 'MENU',
+          path: '/base/unocss',
+          component: '/src/views/base/unocss.vue',
+          icon: 'fa-palette',
+          order: 1,
+          enable: true,
+          show: true,
+          keepAlive: false,
+        },
+        {
+          id: 22,
+          code: 'base-unocss-icon',
+          name: 'UnoCSS图标',
+          type: 'MENU',
+          path: '/base/unocss-icon',
+          component: '/src/views/base/unocss-icon.vue',
+          icon: 'fa-star',
+          order: 2,
+          enable: true,
+          show: true,
+          keepAlive: false,
+        },
+        {
+          id: 23,
+          code: 'base-keep-alive',
+          name: 'KeepAlive',
+          type: 'MENU',
+          path: '/base/keep-alive',
+          component: '/src/views/base/keep-alive.vue',
+          icon: 'fa-bookmark',
+          order: 3,
+          enable: true,
+          show: true,
+          keepAlive: true,
+        },
+        {
+          id: 24,
+          code: 'base-test-modal',
+          name: '测试弹窗',
+          type: 'MENU',
+          path: '/base/test-modal',
+          component: '/src/views/base/test-modal.vue',
+          icon: 'fa-external-link-alt',
+          order: 4,
+          enable: true,
+          show: true,
+          keepAlive: false,
+        },
+      ],
+    },
+    {
+      id: 3,
+      code: 'pms',
+      name: '权限管理',
+      type: 'MENU',
+      path: '/pms',
+      icon: 'fa-shield-alt',
+      order: 2,
+      enable: true,
+      show: true,
+      children: [
+        {
+          id: 31,
+          code: 'pms-user',
+          name: '用户管理',
+          type: 'MENU',
+          path: '/pms/user',
+          component: '/src/views/pms/user/index.vue',
+          icon: 'fa-user',
+          order: 1,
+          enable: true,
+          show: true,
+          keepAlive: false,
+        },
+        {
+          id: 32,
+          code: 'pms-role',
+          name: '角色管理',
+          type: 'MENU',
+          path: '/pms/role',
+          component: '/src/views/pms/role/index.vue',
+          icon: 'fa-users',
+          order: 2,
+          enable: true,
+          show: true,
+          keepAlive: false,
+        },
+        {
+          id: 33,
+          code: 'pms-resource',
+          name: '资源管理',
+          type: 'MENU',
+          path: '/pms/resource',
+          component: '/src/views/pms/resource/index.vue',
+          icon: 'fa-list',
+          order: 3,
+          enable: true,
+          show: true,
+          keepAlive: false,
+        },
+      ],
+    },
+    {
+      id: 4,
+      code: 'demo',
+      name: '演示页面',
+      type: 'MENU',
+      path: '/demo',
+      icon: 'fa-flask',
+      order: 3,
+      enable: true,
+      show: true,
+      children: [
+        {
+          id: 41,
+          code: 'demo-upload',
+          name: '上传示例',
+          type: 'MENU',
+          path: '/demo/upload',
+          component: '/src/views/demo/upload/index.vue',
+          icon: 'fa-cloud-upload-alt',
+          order: 1,
+          enable: true,
+          show: true,
+          keepAlive: false,
+        },
+      ],
+    },
+    {
+      id: 5,
+      code: 'profile',
+      name: '个人资料',
+      type: 'MENU',
+      path: '/profile',
+      component: '/src/views/profile/index.vue',
+      icon: 'fa-user',
+      order: 99,
+      enable: true,
+      show: false,
+      keepAlive: false,
+    },
+  ]
 }

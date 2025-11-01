@@ -13,7 +13,8 @@
 </template>
 
 <script setup>
-import api from '@/api'
+// import api from '@/api'
+import { OhVueIcon } from 'oh-vue-icons'
 import { RoleSelect } from '@/layouts/components'
 import { useAuthStore, usePermissionStore, useUserStore } from '@/store'
 
@@ -26,19 +27,19 @@ const options = reactive([
   {
     label: '个人资料',
     key: 'profile',
-    icon: () => h('i', { class: 'i-material-symbols:person-outline text-14' }),
+    icon: () => h(OhVueIcon, { name: 'fa-user', scale: 1 }),
     show: computed(() => permissionStore.accessRoutes?.some(item => item.path === '/profile')),
   },
   {
     label: '切换角色',
     key: 'toggleRole',
-    icon: () => h('i', { class: 'i-basil:exchange-solid text-14' }),
+    icon: () => h(OhVueIcon, { name: 'fa-exchange-alt', scale: 1 }),
     show: computed(() => userStore.roles.length > 1),
   },
   {
     label: '退出登录',
     key: 'logout',
-    icon: () => h('i', { class: 'i-mdi:exit-to-app text-14' }),
+    icon: () => h(OhVueIcon, { name: 'fa-sign-out-alt', scale: 1 }),
   },
 ])
 
@@ -61,12 +62,7 @@ function handleSelect(key) {
         type: 'info',
         content: '确认退出？',
         async confirm() {
-          try {
-            await api.logout()
-          }
-          catch (error) {
-            console.error(error)
-          }
+          // 移除接口调用，直接前端退出
           authStore.logout()
           $message.success('已退出登录')
         },

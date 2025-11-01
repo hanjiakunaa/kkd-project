@@ -1,5 +1,5 @@
 {
-  "name": "vue-naive-admin",
+  "name": "KK",
   "type": "module",
   "version": "2.0.0",
   "private": true,
@@ -30,8 +30,6 @@
   "devDependencies": {
     "@antfu/eslint-config": "^5.2.1",
     "@iconify/json": "^2.2.378",
-    "@unocss/eslint-config": "^66.4.2",
-    "@unocss/eslint-plugin": "^66.4.2",
     "@unocss/preset-rem-to-px": "^66.4.2",
     "@vitejs/plugin-vue": "^6.0.1",
     "@vitejs/plugin-vue-jsx": "^5.1.0",

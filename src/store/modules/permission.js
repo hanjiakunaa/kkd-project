@@ -1,3 +1,6 @@
+import { h } from 'vue'
+import { NIcon } from 'naive-ui'
+import { OhVueIcon } from 'oh-vue-icons'
 import { hyphenate } from '@vueuse/core'
 import { defineStore } from 'pinia'
 import { isExternal } from '@/utils'
@@ -26,7 +29,14 @@ export const usePermissionStore = defineStore('permission', {
         key: route.name,
         path: route.path,
         originPath: route.meta.originPath,
-        icon: () => h('i', { class: `${route.meta.icon} text-16` }),
+        icon: item.icon
+          ? () => h(NIcon, { size: 18 }, {
+              default: () => h(OhVueIcon, {
+                name: item.icon,
+                scale: 1,
+              }),
+            })
+          : undefined,
         order: item.order ?? 0,
       }
       const children = item.children?.filter(item => item.type === 'MENU') || []
@@ -56,7 +66,7 @@ export const usePermissionStore = defineStore('permission', {
         component: item.component,
         meta: {
           originPath,
-          icon: `${item.icon}?mask`,
+          icon: item.icon,
           title: item.name,
           layout: item.layout,
           keepAlive: !!item.keepAlive,

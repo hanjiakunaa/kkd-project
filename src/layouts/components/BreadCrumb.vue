@@ -15,7 +15,7 @@
         @select="handleDropSelect"
       >
         <div class="flex items-center">
-          <i :class="item.icon" class="mr-8" />
+          <h-icon v-if="item.icon" :name="item.icon" scale="1" class="mr-8" />
           {{ item.name }}
         </div>
       </n-dropdown>
@@ -24,6 +24,7 @@
 </template>
 
 <script setup>
+import { OhVueIcon } from 'oh-vue-icons'
 import { usePermissionStore } from '@/store'
 
 const router = useRouter()
@@ -66,7 +67,7 @@ function getDropOptions(list = []) {
     .map(child => ({
       label: child.name,
       key: child.code,
-      icon: () => h('i', { class: child.icon }),
+      icon: child.icon ? () => h(OhVueIcon, { name: child.icon, scale: 1 }) : undefined,
     }))
 }
 

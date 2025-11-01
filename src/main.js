@@ -13,10 +13,13 @@ import 'uno.css'
 
 async function bootstrap() {
   const app = createApp(App)
+  
+  // 先注册图标组件，确保在渲染菜单前可用
+  app.use(conponentIconPlugins)
+  
   setupStore(app)
   setupDirectives(app)
   await setupRouter(app)
-  app.use(conponentIconPlugins)
   app.mount('#app')
   setupNaiveDiscreteApi()
 }

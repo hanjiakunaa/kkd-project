@@ -1,10 +1,14 @@
 <template>
-  <i
+  <div
     id="fullscreen"
-    class="mr-16 cursor-pointer"
-    :class="isFullscreen ? 'i-fe:minimize' : 'i-fe:maximize'"
+    class="mr-16 cursor-pointer inline-flex items-center"
     @click="toggle"
-  />
+  >
+    <h-icon
+      :name="isFullscreen ? 'fa-compress' : 'fa-expand'"
+      scale="1.2"
+    />
+  </div>
 </template>
 
 <script setup>

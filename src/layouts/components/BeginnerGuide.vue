@@ -95,7 +95,7 @@ const config = {
       el: '#layout-setting',
       tipPosition: 'left',
       title: '调整系统布局',
-      content: '将系统布局调整为你喜欢的样子',
+      content: '将系统布局和主题切换动画调整为你喜欢的样子',
     },
   ],
 }

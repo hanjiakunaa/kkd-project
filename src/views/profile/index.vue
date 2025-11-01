@@ -100,8 +100,8 @@
 import { MeModal } from '@/components'
 import { useForm, useModal } from '@/composables'
 import { useUserStore } from '@/store'
-import { getUserInfo } from '@/store/helper'
-import api from './api'
+// import { getUserInfo } from '@/store/helper'
+// import api from './api'
 
 const userStore = useUserStore()
 const required = {
@@ -115,9 +115,10 @@ const [pwdFormRef, pwdForm, pwdValidation] = useForm()
 
 async function handlePwdSave() {
   await pwdValidation()
-  await api.changePassword(pwdForm.value)
-  $message.success('密码修改成功')
-  refreshUserInfo()
+  // 移除接口调用，前端直接处理
+  await new Promise(resolve => setTimeout(resolve, 500))
+  $message.success('密码修改成功（模拟）')
+  pwdModalRef.value?.close()
 }
 
 const newAvatar = ref(userStore.avatar)
@@ -127,9 +128,11 @@ async function handleAvatarSave() {
     $message.error('请输入头像地址')
     return false
   }
-  await api.updateProfile({ id: userStore.userId, avatar: newAvatar.value })
-  $message.success('头像修改成功')
-  refreshUserInfo()
+  // 移除接口调用，前端直接处理
+  await new Promise(resolve => setTimeout(resolve, 500))
+  userStore.userInfo.avatar = newAvatar.value
+  $message.success('头像修改成功（模拟）')
+  avatarModalRef.value?.close()
 }
 
 const genders = [
@@ -147,13 +150,14 @@ const [profileFormRef, profileForm, profileValidation] = useForm({
 })
 async function handleProfileSave() {
   await profileValidation()
-  await api.updateProfile(profileForm.value)
-  $message.success('资料修改成功')
-  refreshUserInfo()
-}
-
-async function refreshUserInfo() {
-  const user = await getUserInfo()
-  userStore.setUser(user)
+  // 移除接口调用，前端直接处理
+  await new Promise(resolve => setTimeout(resolve, 500))
+  // 更新本地用户信息
+  userStore.userInfo.nickName = profileForm.value.nickName
+  userStore.userInfo.gender = profileForm.value.gender
+  userStore.userInfo.address = profileForm.value.address
+  userStore.userInfo.email = profileForm.value.email
+  $message.success('资料修改成功（模拟）')
+  profileModalRef.value?.close()
 }
 </script>

@@ -1,4 +1,4 @@
-import api from '@/api'
+// import api from '@/api'
 import { useAuthStore, usePermissionStore, useUserStore } from '@/store'
 import { getPermissions, getUserInfo } from '@/store/helper'
 
@@ -30,7 +30,9 @@ export function createPermissionGuard(router) {
       const routeComponents = import.meta.glob('@/views/**/*.vue')
       permissionStore.accessRoutes.forEach((route) => {
         route.component = routeComponents[route.component] || undefined
-        !router.hasRoute(route.name) && router.addRoute(route)
+        if (!router.hasRoute(route.name)) {
+          router.addRoute(route)
+        }
       })
       return { ...to, replace: true }
     }
@@ -39,10 +41,7 @@ export function createPermissionGuard(router) {
     if (routes.find(route => route.name === to.name))
       return true
 
-    // 判断是无权限还是404
-    const { data: hasMenu } = await api.validateMenuPath(to.path)
-    return hasMenu
-      ? { name: '403', query: { path: to.fullPath }, state: { from: 'permission-guard' } }
-      : { name: '404', query: { path: to.fullPath } }
+    // 移除接口验证，直接返回404
+    return { name: '404', query: { path: to.fullPath } }
   })
 }

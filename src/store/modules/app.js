@@ -10,6 +10,7 @@ export const useAppStore = defineStore('app', {
     layout: defaultLayout,
     primaryColor: defaultPrimaryColor,
     naiveThemeOverrides,
+    themeAnimationType: 'horizontal', // 'horizontal' 横切 or 'circle' 圆形扩散
   }),
   actions: {
     switchCollapsed() {
@@ -27,6 +28,9 @@ export const useAppStore = defineStore('app', {
     setPrimaryColor(color) {
       this.primaryColor = color
     },
+    setThemeAnimationType(type) {
+      this.themeAnimationType = type
+    },
     setThemeColor(color = this.primaryColor, isDark = this.isDark) {
       const colors = generate(color, {
         list: true,
@@ -42,7 +46,7 @@ export const useAppStore = defineStore('app', {
     },
   },
   persist: {
-    pick: ['collapsed', 'layout', 'primaryColor', 'naiveThemeOverrides'],
+    pick: ['collapsed', 'layout', 'primaryColor', 'naiveThemeOverrides', 'themeAnimationType'],
     storage: sessionStorage,
   },
 })
