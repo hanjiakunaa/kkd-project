@@ -9,11 +9,7 @@
     "preview": "vite preview",
     "lint:fix": "eslint --fix",
     "postinstall": "npx simple-git-hooks",
-    "up": "taze major -I",
-    "push": "node scripts/git-auto-push.js",
-    "quick": "node scripts/git-auto-push.js",
-    "git": "node scripts/git-auto-push.js",
-    "commit": "node scripts/git-auto-push.js"
+    "up": "taze major -I"
   },
   "dependencies": {
     "@arco-design/color": "^0.4.0",
