@@ -40,7 +40,7 @@ export async function getPermissions() {
       type: 'MENU',
       path: '/',
       component: '/src/views/home/index.vue',
-      icon: 'co-adobe-after-effects',
+      icon: 'fc-home',
       order: 0,
       enable: true,
       show: true,

@@ -14,9 +14,9 @@
         :options="index < breadItems.length - 1 ? getDropOptions(item.children) : []"
         @select="handleDropSelect"
       >
-        <div class="flex items-center">
-          <h-icon v-if="item.icon" :name="item.icon" scale="1" class="mr-8" />
-          {{ item.name }}
+        <div class="inline-flex items-center gap-6">
+          <h-icon v-if="item.icon" :name="item.icon" scale="1" style="display: flex; align-items: center;" />
+          <span>{{ item.name }}</span>
         </div>
       </n-dropdown>
     </n-breadcrumb-item>

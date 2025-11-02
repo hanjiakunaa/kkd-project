@@ -1,6 +1,5 @@
 import { addIcons, OhVueIcon } from 'oh-vue-icons'
 import {
-  CoAdobeAfterEffects, // 测试图标
   FaBookmark, // 书签
   FaCloudUploadAlt, // 上传
   FaCompress, // 退出全屏
@@ -21,11 +20,12 @@ import {
   FaTimes, // 关闭
   FaUser, // 用户/个人
   FaUsers, // 角色/多用户
+  FcHome, // 首页
   PiGastly, // logo
 } from 'oh-vue-icons/icons'
 
 addIcons(
-  CoAdobeAfterEffects,
+  FcHome,
   FaBookmark,
   FaCloudUploadAlt,
   FaCompress,

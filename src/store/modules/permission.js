@@ -1,8 +1,8 @@
-import { h } from 'vue'
+import { hyphenate } from '@vueuse/core'
 import { NIcon } from 'naive-ui'
 import { OhVueIcon } from 'oh-vue-icons'
-import { hyphenate } from '@vueuse/core'
 import { defineStore } from 'pinia'
+import { h } from 'vue'
 import { isExternal } from '@/utils'
 
 export const usePermissionStore = defineStore('permission', {
@@ -30,10 +30,21 @@ export const usePermissionStore = defineStore('permission', {
         path: route.path,
         originPath: route.meta.originPath,
         icon: item.icon
-          ? () => h(NIcon, { size: 18 }, {
+          ? () => h(NIcon, {
+              size: 18,
+              style: {
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                verticalAlign: 'middle',
+              },
+            }, {
               default: () => h(OhVueIcon, {
                 name: item.icon,
                 scale: 1,
+                hover: true,
+                animation: 'ring',
+                speed: 'slow',
               }),
             })
           : undefined,
