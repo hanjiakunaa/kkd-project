@@ -13,66 +13,589 @@
         width: 100%;
         height: 100%;
         display: flex;
+        justify-content: center;
+        align-items: center;
+        background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 50%, #90caf9 100%);
+        transition:
+          background 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+          opacity 0.6s ease-out,
+          visibility 0.6s ease-out;
+        overflow: hidden;
+        z-index: 9999;
+        opacity: 1;
+        visibility: visible;
       }
+
+      .loading-container.hidden {
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+      }
+
       .dark .loading-container {
-        background-color: #232324;
-        color: rgba(255, 255, 255, 0.9);
+        background: radial-gradient(ellipse at center, #0a0e27 0%, #1a1a2e 40%, #0f0f23 100%);
+      }
+
+      .loading-container::before {
+        content: '';
+        position: absolute;
+        width: 600px;
+        height: 600px;
+        background: radial-gradient(circle, rgba(76, 134, 249, 0.1) 0%, transparent 70%);
+        animation: breathe 4s ease-in-out infinite;
+        pointer-events: none;
+      }
+
+      .dark .loading-container::before {
+        background: radial-gradient(circle, rgba(96, 165, 250, 0.15) 0%, transparent 70%);
       }
 
       .loading-container .loading {
-        --speed-of-animation: 0.9s;
-        --gap: 12px;
-        --first-color: #4c86f9;
-        --second-color: #49a84c;
-        --third-color: #f6bb02;
-        --fourth-color: #26a69a;
-        --fifth-color: #2196f3;
-
-        margin: auto;
-        width: 160px;
-        height: 100px;
+        position: relative;
+        width: 240px;
+        height: 240px;
         display: flex;
         justify-content: center;
         align-items: center;
-        gap: var(--gap);
       }
 
-      .loading-container .loading span {
+      /* 外层能量环 */
+      .loading-container .loading .ring {
+        position: absolute;
+        border-radius: 50%;
+        border-style: solid;
+        border-width: 2px;
+        animation: rotate 3s linear infinite;
+      }
+
+      .loading-container .loading .ring-outer {
+        width: 200px;
+        height: 200px;
+        border-color: transparent;
+        border-top-color: #4c86f9;
+        border-right-color: #49a84c;
+        opacity: 0.8;
+        filter: blur(1px);
+      }
+
+      .dark .loading-container .loading .ring-outer {
+        border-top-color: #60a5fa;
+        border-right-color: #34d399;
+        box-shadow:
+          0 0 30px rgba(96, 165, 250, 0.3),
+          inset 0 0 30px rgba(52, 211, 153, 0.1);
+      }
+
+      .loading-container .loading .ring-middle {
+        width: 160px;
+        height: 160px;
+        border-color: transparent;
+        border-bottom-color: #f6bb02;
+        border-left-color: #26a69a;
+        animation: rotate 2s linear infinite reverse;
+        opacity: 0.7;
+      }
+
+      .dark .loading-container .loading .ring-middle {
+        border-bottom-color: #fbbf24;
+        border-left-color: #2dd4bf;
+        box-shadow:
+          0 0 25px rgba(251, 191, 36, 0.25),
+          inset 0 0 25px rgba(45, 212, 191, 0.1);
+      }
+
+      .loading-container .loading .ring-inner {
+        width: 120px;
+        height: 120px;
+        border-color: transparent;
+        border-top-color: #e91e63;
+        border-right-color: #9c27b0;
+        animation: rotate 1.5s linear infinite;
+        opacity: 0.6;
+        filter: blur(0.5px);
+      }
+
+      .dark .loading-container .loading .ring-inner {
+        border-top-color: #f472b6;
+        border-right-color: #a78bfa;
+        box-shadow:
+          0 0 20px rgba(244, 114, 182, 0.2),
+          inset 0 0 20px rgba(167, 139, 250, 0.1);
+      }
+
+      /* 轨道粒子 */
+      .loading-container .loading .orbit {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+      }
+
+      .loading-container .loading .orbit-particles {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+      }
+
+      .loading-container .loading .orbit-particle {
+        position: absolute;
         width: 6px;
-        height: 80px;
-        background: var(--first-color);
-        animation: scale var(--speed-of-animation) ease-in-out infinite;
+        height: 6px;
+        border-radius: 50%;
+        background: #4c86f9;
+        box-shadow: 0 0 8px #4c86f9;
+        transform-origin: 120px center;
+        animation: orbit 2s linear infinite;
       }
 
-      .loading-container .loading span:nth-child(2) {
-        background: var(--second-color);
-        animation-delay: -0.8s;
+      .dark .loading-container .loading .orbit-particle {
+        background: #60a5fa;
+        box-shadow:
+          0 0 10px #60a5fa,
+          0 0 20px rgba(96, 165, 250, 0.6);
       }
 
-      .loading-container .loading span:nth-child(3) {
-        background: var(--third-color);
-        animation-delay: -0.7s;
+      .loading-container .loading .orbit-particle:nth-child(1) {
+        animation-delay: 0s;
+        background: #4c86f9;
       }
 
-      .loading-container .loading span:nth-child(4) {
-        background: var(--fourth-color);
-        animation-delay: -0.6s;
-      }
-
-      .loading-container .loading span:nth-child(5) {
-        background: var(--fifth-color);
+      .loading-container .loading .orbit-particle:nth-child(2) {
         animation-delay: -0.5s;
+        background: #49a84c;
       }
 
-      @keyframes scale {
-        0%,
-        40%,
-        100% {
-          transform: scaleY(0.25);
-        }
+      .loading-container .loading .orbit-particle:nth-child(3) {
+        animation-delay: -1s;
+        background: #f6bb02;
+      }
 
-        20% {
-          transform: scaleY(1);
+      .loading-container .loading .orbit-particle:nth-child(4) {
+        animation-delay: -1.5s;
+        background: #26a69a;
+      }
+
+      .dark .loading-container .loading .orbit-particle:nth-child(1) {
+        background: #60a5fa;
+        box-shadow:
+          0 0 10px #60a5fa,
+          0 0 20px rgba(96, 165, 250, 0.6);
+      }
+
+      .dark .loading-container .loading .orbit-particle:nth-child(2) {
+        background: #34d399;
+        box-shadow:
+          0 0 10px #34d399,
+          0 0 20px rgba(52, 211, 153, 0.6);
+      }
+
+      .dark .loading-container .loading .orbit-particle:nth-child(3) {
+        background: #fbbf24;
+        box-shadow:
+          0 0 10px #fbbf24,
+          0 0 20px rgba(251, 191, 36, 0.6);
+      }
+
+      .dark .loading-container .loading .orbit-particle:nth-child(4) {
+        background: #2dd4bf;
+        box-shadow:
+          0 0 10px #2dd4bf,
+          0 0 20px rgba(45, 212, 191, 0.6);
+      }
+
+      /* 中心能量核心 */
+      .loading-container .loading .core {
+        position: relative;
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: conic-gradient(from 0deg, #4c86f9, #49a84c, #f6bb02, #26a69a, #4c86f9);
+        animation: core-rotate 3s linear infinite;
+        box-shadow:
+          0 0 40px rgba(76, 134, 249, 0.4),
+          inset 0 0 30px rgba(255, 255, 255, 0.3);
+      }
+
+      .dark .loading-container .loading .core {
+        background: conic-gradient(from 0deg, #60a5fa, #34d399, #fbbf24, #2dd4bf, #60a5fa);
+        box-shadow:
+          0 0 50px rgba(96, 165, 250, 0.5),
+          0 0 80px rgba(96, 165, 250, 0.2),
+          inset 0 0 30px rgba(255, 255, 255, 0.15);
+      }
+
+      .loading-container .loading .core::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 60px;
+        height: 60px;
+        margin: -30px 0 0 -30px;
+        border-radius: 50%;
+        background: radial-gradient(
+          circle,
+          rgba(255, 255, 255, 0.95) 0%,
+          rgba(255, 255, 255, 0.7) 30%,
+          transparent 70%
+        );
+        animation: pulse 2s ease-in-out infinite;
+      }
+
+      .loading-container .loading .core::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 40px;
+        height: 40px;
+        margin: -20px 0 0 -20px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 0.8) 50%, transparent 100%);
+      }
+
+      /* 波纹扩散效果 */
+      .loading-container .loading .ripple {
+        position: absolute;
+        width: 240px;
+        height: 240px;
+        border-radius: 50%;
+        border: 2px solid rgba(76, 134, 249, 0.3);
+        animation: ripple 2s ease-out infinite;
+        pointer-events: none;
+      }
+
+      .dark .loading-container .loading .ripple {
+        border-color: rgba(96, 165, 250, 0.4);
+      }
+
+      .loading-container .loading .ripple:nth-child(2) {
+        animation-delay: 0.5s;
+      }
+
+      .loading-container .loading .ripple:nth-child(3) {
+        animation-delay: 1s;
+      }
+
+      @keyframes rotate {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      @keyframes core-rotate {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      @keyframes orbit {
+        0% {
+          transform: rotate(0deg) translateX(120px) rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg) translateX(120px) rotate(-360deg);
+        }
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          transform: translate(-50%, -50%) scale(1);
+          opacity: 1;
+        }
+        50% {
+          transform: translate(-50%, -50%) scale(1.1);
+          opacity: 0.8;
+        }
+      }
+
+      @keyframes ripple {
+        0% {
+          transform: scale(0.8);
+          opacity: 1;
+        }
+        100% {
+          transform: scale(1.4);
+          opacity: 0;
+        }
+      }
+
+      @keyframes breathe {
+        0%,
+        100% {
+          transform: scale(1);
+          opacity: 0.6;
+        }
+        50% {
+          transform: scale(1.2);
+          opacity: 0.8;
+        }
+      }
+
+      /* 浮动的小机器人和飞船 */
+      .floating-characters {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        overflow: hidden;
+      }
+
+      .character {
+        position: absolute;
+        animation: float-horizontal 4s ease-in-out infinite;
+      }
+
+      .character.robot-1 {
+        top: 15%;
+        left: 10%;
+        animation-delay: 0s;
+        animation-duration: 5s;
+      }
+
+      .character.robot-2 {
+        top: 70%;
+        left: 15%;
+        animation-delay: 1s;
+        animation-duration: 6s;
+      }
+
+      .character.ship-1 {
+        top: 40%;
+        left: 8%;
+        animation-delay: 0.5s;
+        animation-duration: 4.5s;
+      }
+
+      .character.ship-2 {
+        top: 85%;
+        left: 12%;
+        animation-delay: 1.5s;
+        animation-duration: 5.5s;
+      }
+
+      .character.robot-right-1 {
+        top: 20%;
+        right: 10%;
+        animation-delay: 0.3s;
+        animation-duration: 5.2s;
+      }
+
+      .character.robot-right-2 {
+        top: 60%;
+        right: 15%;
+        animation-delay: 1.2s;
+        animation-duration: 6.3s;
+      }
+
+      .character.ship-right-1 {
+        top: 35%;
+        right: 8%;
+        animation-delay: 0.8s;
+        animation-duration: 4.8s;
+      }
+
+      .character.ship-right-2 {
+        top: 75%;
+        right: 12%;
+        animation-delay: 1.8s;
+        animation-duration: 5.8s;
+      }
+
+      /* 小机器人样式 */
+      .robot {
+        width: 32px;
+        height: 40px;
+        position: relative;
+        transform-origin: center bottom;
+        animation: robot-bounce 2s ease-in-out infinite;
+      }
+
+      .robot::before {
+        content: '';
+        position: absolute;
+        width: 32px;
+        height: 20px;
+        background: #4c86f9;
+        border-radius: 8px 8px 4px 4px;
+        box-shadow: 0 2px 8px rgba(76, 134, 249, 0.4);
+      }
+
+      .robot::after {
+        content: '';
+        position: absolute;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 24px;
+        height: 24px;
+        background: #49a84c;
+        border-radius: 4px;
+        box-shadow: 0 2px 8px rgba(73, 168, 76, 0.4);
+      }
+
+      .dark .robot::before {
+        background: #60a5fa;
+        box-shadow:
+          0 2px 8px rgba(96, 165, 250, 0.4),
+          0 0 15px rgba(96, 165, 250, 0.3);
+      }
+
+      .dark .robot::after {
+        background: #34d399;
+        box-shadow:
+          0 2px 8px rgba(52, 211, 153, 0.4),
+          0 0 15px rgba(52, 211, 153, 0.3);
+      }
+
+      /* 机器人眼睛 */
+      .robot .eye {
+        position: absolute;
+        top: 6px;
+        width: 6px;
+        height: 6px;
+        background: #fff;
+        border-radius: 50%;
+        box-shadow: 0 0 4px rgba(255, 255, 255, 0.8);
+        animation: blink 3s ease-in-out infinite;
+      }
+
+      .robot .eye.left {
+        left: 8px;
+      }
+
+      .robot .eye.right {
+        right: 8px;
+      }
+
+      /* 飞船样式 */
+      .spaceship {
+        width: 36px;
+        height: 20px;
+        position: relative;
+        animation: ship-tilt 3s ease-in-out infinite;
+      }
+
+      .spaceship::before {
+        content: '';
+        position: absolute;
+        width: 0;
+        height: 0;
+        border-left: 18px solid transparent;
+        border-right: 18px solid transparent;
+        border-bottom: 20px solid #f6bb02;
+        filter: drop-shadow(0 2px 8px rgba(246, 187, 2, 0.4));
+      }
+
+      .spaceship::after {
+        content: '';
+        position: absolute;
+        top: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 12px;
+        height: 8px;
+        background: #26a69a;
+        border-radius: 0 0 6px 6px;
+        box-shadow: 0 2px 8px rgba(38, 166, 154, 0.4);
+      }
+
+      .dark .spaceship::before {
+        border-bottom-color: #fbbf24;
+        filter: drop-shadow(0 2px 8px rgba(251, 191, 36, 0.4)) drop-shadow(0 0 15px rgba(251, 191, 36, 0.3));
+      }
+
+      .dark .spaceship::after {
+        background: #2dd4bf;
+        box-shadow:
+          0 2px 8px rgba(45, 212, 191, 0.4),
+          0 0 15px rgba(45, 212, 191, 0.3);
+      }
+
+      /* 飞船尾焰 */
+      .spaceship .flame {
+        position: absolute;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 8px;
+        height: 12px;
+        background: linear-gradient(to bottom, #ff6b6b, transparent);
+        border-radius: 0 0 4px 4px;
+        opacity: 0.7;
+        animation: flame-flicker 0.3s ease-in-out infinite alternate;
+      }
+
+      .dark .spaceship .flame {
+        background: linear-gradient(to bottom, #f87171, transparent);
+      }
+
+      /* 动画定义 */
+      @keyframes float-horizontal {
+        0%,
+        100% {
+          transform: translateX(0) translateY(0);
+        }
+        25% {
+          transform: translateX(20px) translateY(-10px);
+        }
+        50% {
+          transform: translateX(0) translateY(-20px);
+        }
+        75% {
+          transform: translateX(-20px) translateY(-10px);
+        }
+      }
+
+      @keyframes robot-bounce {
+        0%,
+        100% {
+          transform: translateY(0);
+        }
+        50% {
+          transform: translateY(-8px);
+        }
+      }
+
+      @keyframes ship-tilt {
+        0%,
+        100% {
+          transform: rotate(0deg);
+        }
+        25% {
+          transform: rotate(-5deg);
+        }
+        75% {
+          transform: rotate(5deg);
+        }
+      }
+
+      @keyframes blink {
+        0%,
+        90%,
+        100% {
+          opacity: 1;
+        }
+        95% {
+          opacity: 0.1;
+        }
+      }
+
+      @keyframes flame-flicker {
+        0% {
+          opacity: 0.6;
+          transform: translateX(-50%) scaleY(0.9);
+        }
+        100% {
+          opacity: 0.9;
+          transform: translateX(-50%) scaleY(1.1);
         }
       }
     </style>
@@ -80,15 +603,132 @@
   <body class="dark:text-#e9e9e9 auto-bg">
     <div id="app">
       <div class="loading-container">
+        <div class="floating-characters">
+          <div class="character robot-1">
+            <div class="robot">
+              <div class="eye left"></div>
+              <div class="eye right"></div>
+            </div>
+          </div>
+          <div class="character robot-2">
+            <div class="robot">
+              <div class="eye left"></div>
+              <div class="eye right"></div>
+            </div>
+          </div>
+          <div class="character ship-1">
+            <div class="spaceship">
+              <div class="flame"></div>
+            </div>
+          </div>
+          <div class="character ship-2">
+            <div class="spaceship">
+              <div class="flame"></div>
+            </div>
+          </div>
+          <div class="character robot-right-1">
+            <div class="robot">
+              <div class="eye left"></div>
+              <div class="eye right"></div>
+            </div>
+          </div>
+          <div class="character robot-right-2">
+            <div class="robot">
+              <div class="eye left"></div>
+              <div class="eye right"></div>
+            </div>
+          </div>
+          <div class="character ship-right-1">
+            <div class="spaceship">
+              <div class="flame"></div>
+            </div>
+          </div>
+          <div class="character ship-right-2">
+            <div class="spaceship">
+              <div class="flame"></div>
+            </div>
+          </div>
+        </div>
         <div class="loading">
-          <span></span>
-          <span></span>
-          <span></span>
-          <span></span>
-          <span></span>
+          <div class="ripple"></div>
+          <div class="ripple"></div>
+          <div class="ripple"></div>
+          <div class="ring ring-outer"></div>
+          <div class="ring ring-middle"></div>
+          <div class="ring ring-inner"></div>
+          <div class="orbit-particles">
+            <div class="orbit-particle"></div>
+            <div class="orbit-particle"></div>
+            <div class="orbit-particle"></div>
+            <div class="orbit-particle"></div>
+          </div>
+          <div class="core"></div>
         </div>
       </div>
     </div>
+    <script>
+      // Loading 控制脚本
+      ;(function () {
+        const loadingContainer = document.querySelector('.loading-container')
+        let minDisplayTime = 2000 // 最小显示时间（毫秒），默认 2 秒
+        let startTime = Date.now()
+        let isHidden = false
+
+        // 隐藏 loading 的函数
+        window.hideLoading = function (force = false) {
+          if (isHidden && !force) return
+
+          const elapsed = Date.now() - startTime
+          const remaining = Math.max(0, minDisplayTime - elapsed)
+
+          setTimeout(() => {
+            if (loadingContainer && !isHidden) {
+              loadingContainer.classList.add('hidden')
+              // 等待动画完成后移除元素
+              setTimeout(() => {
+                if (loadingContainer && loadingContainer.parentNode) {
+                  loadingContainer.parentNode.removeChild(loadingContainer)
+                }
+              }, 600)
+              isHidden = true
+            }
+          }, remaining)
+        }
+
+        // 显示 loading 的函数
+        window.showLoading = function () {
+          if (loadingContainer) {
+            loadingContainer.classList.remove('hidden')
+            isHidden = false
+            startTime = Date.now()
+          }
+        }
+
+        // 设置最小显示时间
+        window.setMinLoadingTime = function (time) {
+          minDisplayTime = Math.max(500, time) // 最少 500ms
+        }
+
+        // 设置默认的最小显示时间（可以在应用启动前修改）
+        // 例如：设置为 3 秒（3000 毫秒）
+        window.setMinLoadingTime(3000) // 默认 3 秒
+
+        // 导出全局 API
+        window.loadingController = {
+          hide: window.hideLoading,
+          show: window.showLoading,
+          setMinTime: window.setMinLoadingTime,
+        }
+
+        console.log(
+          '🎮 Loading Controller Ready!\n' +
+            '  - window.hideLoading() - 隐藏 loading\n' +
+            '  - window.showLoading() - 显示 loading\n' +
+            '  - window.setMinLoadingTime(ms) - 设置最小显示时间\n' +
+            '  - window.loadingController - 控制器对象',
+        )
+      })()
+    </script>
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>

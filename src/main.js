@@ -13,15 +13,21 @@ import 'uno.css'
 
 async function bootstrap() {
   const app = createApp(App)
-  
+
   // 先注册图标组件，确保在渲染菜单前可用
   app.use(conponentIconPlugins)
-  
+
   setupStore(app)
   setupDirectives(app)
   await setupRouter(app)
   app.mount('#app')
   setupNaiveDiscreteApi()
+
+  // 应用加载完成后，隐藏 loading
+  // 可以通过 window.setMinLoadingTime(ms) 来调整最小显示时间
+  if (window.hideLoading) {
+    window.hideLoading()
+  }
 }
 
 bootstrap()
