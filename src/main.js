@@ -1,4 +1,4 @@
-import { createApp } from 'vue'
+import { createApp, nextTick } from 'vue'
 import App from './App.vue'
 import { setupDirectives } from './directives'
 
@@ -25,6 +25,8 @@ async function bootstrap() {
 
   // 应用加载完成后，隐藏 loading
   // 可以通过 window.setMinLoadingTime(ms) 来调整最小显示时间
+  // 使用 nextTick 确保 Vue 应用已完全渲染
+  await nextTick()
   if (window.hideLoading) {
     window.hideLoading()
   }

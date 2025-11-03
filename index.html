@@ -669,14 +669,50 @@
     <script>
       // Loading 控制脚本
       ;(function () {
-        const loadingContainer = document.querySelector('.loading-container')
-        let minDisplayTime = 2000 // 最小显示时间（毫秒），默认 2 秒
-        let startTime = Date.now()
+        let loadingContainer = null
+        let minDisplayTime = 3000 // 最小显示时间（毫秒），默认 3 秒
+        let startTime = null
         let isHidden = false
+        let isInitialized = false
+
+        // 初始化函数 - 确保在 DOM 加载完成后执行
+        function init() {
+          if (isInitialized) return
+
+          loadingContainer = document.querySelector('.loading-container')
+          if (!loadingContainer) {
+            console.warn('⚠️ Loading container not found')
+            return
+          }
+
+          // 在 DOM 加载完成后设置开始时间
+          startTime = Date.now()
+          isInitialized = true
+
+          console.log(
+            '🎮 Loading Controller Ready!\n' +
+              '  - window.hideLoading() - 隐藏 loading\n' +
+              '  - window.showLoading() - 显示 loading\n' +
+              '  - window.setMinLoadingTime(ms) - 设置最小显示时间\n' +
+              '  - window.loadingController - 控制器对象',
+          )
+        }
 
         // 隐藏 loading 的函数
         window.hideLoading = function (force = false) {
+          // 如果还没初始化，先初始化
+          if (!isInitialized) {
+            init()
+            // 如果初始化后仍然没有容器，直接返回
+            if (!loadingContainer) return
+          }
+
           if (isHidden && !force) return
+
+          // 确保 startTime 已设置
+          if (startTime === null) {
+            startTime = Date.now()
+          }
 
           const elapsed = Date.now() - startTime
           const remaining = Math.max(0, minDisplayTime - elapsed)
@@ -697,6 +733,10 @@
 
         // 显示 loading 的函数
         window.showLoading = function () {
+          if (!isInitialized) {
+            init()
+          }
+
           if (loadingContainer) {
             loadingContainer.classList.remove('hidden')
             isHidden = false
@@ -709,9 +749,14 @@
           minDisplayTime = Math.max(500, time) // 最少 500ms
         }
 
-        // 设置默认的最小显示时间（可以在应用启动前修改）
-        // 例如：设置为 3 秒（3000 毫秒）
-        window.setMinLoadingTime(3000) // 默认 3 秒
+        // 在 DOM 加载完成后初始化
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', init)
+        } else {
+          // DOM 已经加载完成，立即初始化
+          // 使用 setTimeout 确保在下一个事件循环中执行，给 DOM 渲染时间
+          setTimeout(init, 0)
+        }
 
         // 导出全局 API
         window.loadingController = {
@@ -719,14 +764,6 @@
           show: window.showLoading,
           setMinTime: window.setMinLoadingTime,
         }
-
-        console.log(
-          '🎮 Loading Controller Ready!\n' +
-            '  - window.hideLoading() - 隐藏 loading\n' +
-            '  - window.showLoading() - 显示 loading\n' +
-            '  - window.setMinLoadingTime(ms) - 设置最小显示时间\n' +
-            '  - window.loadingController - 控制器对象',
-        )
       })()
     </script>
     <script type="module" src="/src/main.js"></script>
