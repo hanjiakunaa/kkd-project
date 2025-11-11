@@ -90,7 +90,7 @@ export async function toggleDark({ clientX, clientY }) {
   else if (appStore.themeAnimationType === 'corners') {
     // 四角聚合：平滑聚合
     animationConfig = {
-      duration: 800,
+      duration: 600,
       easing: 'cubic-bezier(0.68, -0.55, 0.265, 1.55)', // 回弹效果
     }
   }

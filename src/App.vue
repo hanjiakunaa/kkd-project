@@ -15,8 +15,8 @@
         </transition>
       </component>
 
-      <layout-setting v-if="layoutSettingVisible" class="fixed right-12 top-1/2 z-999" />
-      <layout-view-source-code v-if="layoutViewSourceCodeVisible" class="fixed right-12 top-1/2.3 z-999" />
+      <layout-setting v-if="layoutSettingVisible && !hideLayoutTools" class="fixed right-12 top-1/2 z-999" />
+      <layout-view-source-code v-if="layoutViewSourceCodeVisible && !hideLayoutTools" class="fixed right-12 top-1/2.3 z-999" />
     </router-view>
   </n-config-provider>
 </template>
@@ -50,6 +50,12 @@ const Layout = computed(() => {
 const tabStore = useTabStore()
 const keepAliveNames = computed(() => {
   return tabStore.tabs.filter(item => item.keepAlive).map(item => item.name)
+})
+
+const hideLayoutTools = computed(() => {
+  if (!route.name)
+    return route.path === '/login'
+  return route.name === 'Login'
 })
 
 watchEffect(() => {

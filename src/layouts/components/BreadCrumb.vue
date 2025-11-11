@@ -1,5 +1,5 @@
 <template>
-  <n-breadcrumb>
+  <n-breadcrumb class="flex items-center gap-8 text-16 leading-none">
     <n-breadcrumb-item v-if="!breadItems?.length" :clickable="false">
       {{ route.meta.title }}
     </n-breadcrumb-item>
@@ -14,8 +14,13 @@
         :options="index < breadItems.length - 1 ? getDropOptions(item.children) : []"
         @select="handleDropSelect"
       >
-        <div class="inline-flex items-center gap-6">
-          <h-icon v-if="item.icon" :name="item.icon" scale="1" style="display: flex; align-items: center;" />
+        <div class="flex items-center gap-6 leading-none">
+          <h-icon
+            v-if="item.icon"
+            :name="item.icon"
+            scale="1"
+            class="flex items-center text-18 leading-none"
+          />
           <span>{{ item.name }}</span>
         </div>
       </n-dropdown>
@@ -77,3 +82,16 @@ function handleDropSelect(code) {
   }
 }
 </script>
+
+<style scoped>
+:deep(.n-breadcrumb-item) {
+  display: inline-flex;
+  align-items: center;
+}
+
+:deep(.n-breadcrumb-item__separator) {
+  display: inline-flex;
+  align-items: center;
+  margin: 0 12px;
+}
+</style>
