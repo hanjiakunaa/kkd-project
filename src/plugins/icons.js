@@ -25,6 +25,7 @@ import {
   PiGastly, // logo
   PrCloudUpload, // 云上传
   ViFileTypeVscode,
+  PxPixelarticons,
 } from 'oh-vue-icons/icons'
 
 addIcons(
@@ -53,6 +54,7 @@ addIcons(
   ViFileTypeVscode,
   MdMorevert,
   BiCodeSlash,
+  PxPixelarticons,
 )
 
 export const conponentIconPlugins = {
