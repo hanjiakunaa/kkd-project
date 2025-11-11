@@ -1,8 +1,5 @@
 <script setup>
 import { isDark, toggleDark } from '@/hooks/useToggleDark.js'
-
-console.warn('isDark', isDark.value)
-console.warn('toggleDark', toggleDark)
 </script>
 
 <template>

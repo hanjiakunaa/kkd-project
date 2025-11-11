@@ -8,7 +8,6 @@
     "build": "vite build",
     "preview": "vite preview",
     "lint:fix": "eslint --fix",
-    "postinstall": "npx simple-git-hooks",
     "up": "taze major -I"
   },
   "dependencies": {
@@ -53,7 +52,6 @@
     "glob": "^11.0.3",
     "lint-staged": "^16.1.5",
     "rollup-plugin-visualizer": "^6.0.3",
-    "simple-git-hooks": "^2.13.1",
     "taze": "^19.3.0",
     "unocss": "^66.4.2",
     "unplugin-auto-import": "^20.0.0",
