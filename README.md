@@ -1,6 +1,6 @@
 ## 简介
 
-一款极简风格的后台管理模板，包含前后端解决方案，前端使用 Vite + Vue3 + Pinia + Unocss
+一款极简风格的后台管理模板，使用 Vite + Vue3 + Pinia + Unocss
 
 ## 特性
 
