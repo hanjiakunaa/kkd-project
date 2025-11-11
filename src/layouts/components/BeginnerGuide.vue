@@ -95,6 +95,12 @@ const config = {
       content: '鼠标滚轮滑动可调整至最佳视野',
     },
     {
+      el: '#layout-view-source-code',
+      tipPosition: 'left',
+      title: '源代码查看',
+      content: '查看当前页面源代码',
+    },
+    {
       el: '#layout-setting',
       tipPosition: 'left',
       title: '调整系统布局',

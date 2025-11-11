@@ -2,7 +2,7 @@
   <div>
     <n-tooltip trigger="hover" placement="left">
       <template #trigger>
-        <div id="layout-view-source-code" :class="triggerClass" @click="viewCodeModalRef.open()">
+        <div id="layout-view-source-code" :class="triggerClass" @click="viewSourceCode">
           <h-icon name="bi-code-slash" class="text-20 text-white" />
         </div>
       </template>
@@ -35,7 +35,14 @@ const language = ref('plaintext')
 const modalTitle = ref('')
 
 async function viewSource(targetFile) {
-  const meta = getFileMeta(targetFile)
+  const normalizedTarget = normalizeComponentPath(targetFile)
+  if (!normalizedTarget) {
+    code.value = ''
+    console.warn(`[CodeEditorDemo] 无法解析文件路径: ${targetFile}`)
+    return
+  }
+
+  const meta = getFileMeta(normalizedTarget)
 
   if (!meta) {
     console.warn(`[CodeEditorDemo] 未能解析文件: ${targetFile}`)
@@ -44,7 +51,7 @@ async function viewSource(targetFile) {
 
   language.value = meta.language
 
-  const rawContent = await getFileRawCode(targetFile, meta.normalizedPath)
+  const rawContent = await getFileRawCode(normalizedTarget, meta.normalizedPath)
 
   if (!rawContent) {
     console.warn(`[CodeEditorDemo] 未能读取文件: ${targetFile}`)
@@ -54,13 +61,88 @@ async function viewSource(targetFile) {
   code.value = rawContent
 }
 
-// 或者
+function viewSourceCode() {
+  if (code.value !== '') {
+    viewCodeModalRef.value?.open()
+  }
+}
+
 watch(
-  route,
-  (to, _from) => {
-    modalTitle.value = `查看${to.meta.title || ''}页面源码`
-    viewSource(to.meta.componentPath)
+  () => [route.fullPath, route.meta.componentPath],
+  async () => {
+    const targetFile = resolveComponentPath(route)
+    if (!targetFile) {
+      code.value = ''
+      return
+    }
+
+    modalTitle.value = `查看${route.meta.title || ''}页面源码`
+    await viewSource(targetFile)
   },
-  { deep: true, immediate: true }, // 如果需要
+  { immediate: true },
 )
+
+function resolveComponentPath(currentRoute) {
+  const fromMeta = normalizeComponentPath(currentRoute.meta?.componentPath)
+  if (fromMeta)
+    return fromMeta
+
+  const matched = currentRoute.matched || []
+  for (let i = matched.length - 1; i >= 0; i -= 1) {
+    const record = matched[i]
+    const candidate = [
+      record.components?.default,
+      record.components?.default?.__asyncResolved,
+      record.instances?.default,
+      record.instances?.default?.type,
+      record.instances?.default?.$?.type,
+    ]
+      .map(getComponentFilePath)
+      .find(Boolean)
+
+    const normalized = normalizeComponentPath(candidate)
+    if (normalized)
+      return normalized
+  }
+
+  return null
+}
+
+function getComponentFilePath(component) {
+  if (!component)
+    return null
+
+  if (component.__file)
+    return component.__file
+
+  if (component.type?.__file)
+    return component.type.__file
+
+  if (component.$?.type?.__file)
+    return component.$.type.__file
+
+  return null
+}
+
+function normalizeComponentPath(rawPath) {
+  if (!rawPath || typeof rawPath !== 'string')
+    return null
+
+  const replaced = rawPath.replace(/\\/g, '/').trim()
+
+  if (replaced.startsWith('/src/views'))
+    return replaced
+
+  if (replaced.startsWith('src/views'))
+    return `/${replaced}`
+
+  if (replaced.startsWith('@/views'))
+    return `/${replaced.replace(/^@\//, 'src/')}`
+
+  const match = replaced.match(/\/src\/views\/.+/)
+  if (match)
+    return match[0]
+
+  return null
+}
 </script>
