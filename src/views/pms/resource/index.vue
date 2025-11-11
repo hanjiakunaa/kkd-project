@@ -1,8 +1,8 @@
 <template>
-  <CommonPage>
+  <common-page>
     <div class="flex">
       <n-spin size="small" :show="treeLoading">
-        <MenuTree
+        <menu-tree
           v-model:current-menu="currentMenu"
           class="w-320 shrink-0"
           :tree-data="treeData"
@@ -16,10 +16,10 @@
             <h3 class="mb-12">
               {{ currentMenu.name }}
             </h3>
-            <NButton size="small" type="primary" @click="handleEdit(currentMenu)">
+            <n-button size="small" type="primary" @click="handleEdit(currentMenu)">
               <i class="i-material-symbols:edit-outline mr-4 text-14" />
               编辑
-            </NButton>
+            </n-button>
           </div>
           <n-descriptions label-placement="left" bordered :column="2">
             <n-descriptions-item label="编码">
@@ -62,13 +62,13 @@
             <h3 class="mb-12">
               按钮
             </h3>
-            <NButton size="small" type="primary" @click="handleAddBtn">
+            <n-button size="small" type="primary" @click="handleAddBtn">
               <i class="i-fe:plus mr-4 text-14" />
               新增
-            </NButton>
+            </n-button>
           </div>
 
-          <MeCrud
+          <me-crud
             ref="$table"
             :columns="btnsColumns"
             :scroll-x="-1"
@@ -79,8 +79,8 @@
         <n-empty v-else class="h-450 f-c-c" size="large" description="请选择菜单查看详情" />
       </div>
     </div>
-    <ResAddOrEdit ref="modalRef" :menus="treeData" @refresh="initData" />
-  </CommonPage>
+    <res-add-or-edit ref="modalRef" :menus="treeData" @refresh="initData" />
+  </common-page>
 </template>
 
 <script setup>

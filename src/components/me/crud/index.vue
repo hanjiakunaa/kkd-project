@@ -1,6 +1,6 @@
 <template>
   <div class="h-full flex flex-col overflow-hidden">
-    <AppCard v-if="$slots.default" bordered bg="#fafafc dark:black" class="mb-30 min-h-60 rounded-4">
+    <app-card v-if="$slots.default" bordered bg="#fafafc dark:black" class="mb-30 min-h-60 rounded-4">
       <form class="flex justify-between p-16" @submit.prevent="handleSearch()">
         <n-scrollbar x-scrollable>
           <n-space :wrap="!expand || isExpanded" :size="[32, 16]" class="p-10">
@@ -29,9 +29,9 @@
           </template>
         </div>
       </form>
-    </AppCard>
+    </app-card>
 
-    <NDataTable
+    <n-data-table
       :remote="remote"
       :loading="loading"
       :scroll-x="scrollX"

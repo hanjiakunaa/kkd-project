@@ -1,7 +1,7 @@
 <template>
   <div
     id="fullscreen"
-    class="mr-16 cursor-pointer inline-flex items-center"
+    class="mr-16 inline-flex cursor-pointer items-center"
     @click="toggle"
   >
     <h-icon

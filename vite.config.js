@@ -1,5 +1,3 @@
-
-
 import path from 'node:path'
 import Vue from '@vitejs/plugin-vue'
 import VueJsx from '@vitejs/plugin-vue-jsx'
@@ -30,6 +28,7 @@ export default defineConfig(({ mode }) => {
       Components({
         resolvers: [NaiveUiResolver()],
         dts: false,
+        dirs: ['src/components/common'], // 自动导入 common 组件
       }),
       // 自定义插件，用于生成页面文件的path，并添加到虚拟模块
       pluginPagePathes(),

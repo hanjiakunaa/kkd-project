@@ -9,22 +9,23 @@
     <router-view v-if="Layout" v-slot="{ Component, route: curRoute }">
       <component :is="Layout">
         <transition name="fade-slide" mode="out-in" appear>
-          <KeepAlive :include="keepAliveNames">
+          <keep-alive :include="keepAliveNames">
             <component :is="Component" v-if="!tabStore.reloading" :key="curRoute.fullPath" />
-          </KeepAlive>
+          </keep-alive>
         </transition>
       </component>
 
-      <LayoutSetting v-if="layoutSettingVisible" class="fixed right-12 top-1/2 z-999" />
+      <layout-setting v-if="layoutSettingVisible" class="fixed right-12 top-1/2 z-999" />
+      <layout-view-source-code v-if="layoutViewSourceCodeVisible" class="fixed right-12 top-1/2.3 z-999" />
     </router-view>
   </n-config-provider>
 </template>
 
 <script setup>
 import { darkTheme, dateZhCN, zhCN } from 'naive-ui'
-import { LayoutSetting } from '@/components'
+import { LayoutSetting, LayoutViewSourceCode } from '@/components'
 import { useAppStore, useTabStore } from '@/store'
-import { layoutSettingVisible } from './settings'
+import { layoutSettingVisible, layoutViewSourceCodeVisible } from './settings'
 
 const layouts = new Map()
 function getLayout(name) {

@@ -9,7 +9,7 @@
       布局设置
     </n-tooltip>
 
-    <MeModal ref="modalRef" title="布局设置" :show-footer="false" width="600px">
+    <me-modal ref="modalRef" title="布局设置" :show-footer="false" width="600px">
       <n-space justify="space-between">
         <div class="flex-col cursor-pointer justify-center" @click="appStore.setLayout('simple')">
           <div class="flex">
@@ -166,7 +166,7 @@
           </n-button>
         </div>
       </n-space>
-    </MeModal>
+    </me-modal>
   </div>
 </template>
 

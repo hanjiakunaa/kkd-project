@@ -5,13 +5,13 @@
       :class="appStore.collapsed ? 'w-64' : 'w-220'"
       border-r="1px solid light_border dark:dark_border"
     >
-      <SideBar />
+      <side-bar />
     </aside>
 
     <article class="w-0 flex-col flex-1">
-      <AppHeader class="h-60 flex-shrink-0" />
+      <app-header class="h-60 flex-shrink-0" />
       <div class="p-12" border-b="1px solid light_border dark:dark_border">
-        <AppTab class="flex-shrink-0" />
+        <app-tab class="flex-shrink-0" />
       </div>
       <slot />
     </article>

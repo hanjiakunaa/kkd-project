@@ -4,7 +4,7 @@
       <slot />
     </main>
     <slot name="footer">
-      <TheFooter v-if="showFooter" class="mb-12 mt-auto" />
+      <the-footer v-if="showFooter" class="mb-12 mt-auto" />
     </slot>
     <n-back-top :bottom="20" />
   </main>

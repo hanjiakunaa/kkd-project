@@ -1,5 +1,5 @@
 <template>
-  <AppPage show-footer>
+  <app-page show-footer>
     <n-card>
       <n-space align="center">
         <n-avatar round :size="100" :src="userStore.avatar" />
@@ -53,11 +53,11 @@
       </n-descriptions>
     </n-card>
 
-    <MeModal ref="avatarModalRef" width="420px" title="更改头像" @ok="handleAvatarSave()">
+    <me-modal ref="avatarModalRef" width="420px" title="更改头像" @ok="handleAvatarSave()">
       <n-input v-model:value="newAvatar" />
-    </MeModal>
+    </me-modal>
 
-    <MeModal ref="pwdModalRef" title="修改密码" width="420px" @ok="handlePwdSave()">
+    <me-modal ref="pwdModalRef" title="修改密码" width="420px" @ok="handlePwdSave()">
       <n-form
         ref="pwdFormRef"
         :model="pwdForm"
@@ -71,9 +71,9 @@
           <n-input v-model:value="pwdForm.newPassword" type="password" placeholder="请输入新密码" show-password-on="mousedown" />
         </n-form-item>
       </n-form>
-    </MeModal>
+    </me-modal>
 
-    <MeModal ref="profileModalRef" title="修改资料" width="420px" @ok="handleProfileSave()">
+    <me-modal ref="profileModalRef" title="修改资料" width="420px" @ok="handleProfileSave()">
       <n-form ref="profileFormRef" :model="profileForm" label-placement="left">
         <n-form-item label="昵称" path="nickName">
           <n-input v-model:value="profileForm.nickName" placeholder="请输入昵称" />
@@ -92,8 +92,8 @@
           <n-input v-model:value="profileForm.email" placeholder="请输入邮箱" />
         </n-form-item>
       </n-form>
-    </MeModal>
-  </AppPage>
+    </me-modal>
+  </app-page>
 </template>
 
 <script setup>

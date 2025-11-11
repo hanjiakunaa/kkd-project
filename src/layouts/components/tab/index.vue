@@ -17,7 +17,7 @@
       </n-tab>
     </n-tabs>
 
-    <ContextMenu
+    <context-menu
       v-if="contextMenuOption.show"
       v-model:show="contextMenuOption.show"
       :current-path="contextMenuOption.currentPath"

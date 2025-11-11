@@ -5,7 +5,7 @@
       :class="appStore.collapsed ? 'w-64' : 'w-220'"
       border-r="1px solid light_border dark:dark_border"
     >
-      <SideBar />
+      <side-bar />
     </aside>
 
     <article class="w-0 flex-col flex-1">

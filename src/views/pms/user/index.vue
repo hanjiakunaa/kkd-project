@@ -1,33 +1,33 @@
 <template>
-  <CommonPage>
+  <common-page>
     <template #action>
-      <NButton v-permission="'AddUser'" type="primary" @click="handleAdd()">
+      <n-button v-permission="'AddUser'" type="primary" @click="handleAdd()">
         <i class="i-material-symbols:add mr-4 text-18" />
         创建新用户
-      </NButton>
+      </n-button>
     </template>
 
-    <MeCrud
+    <me-crud
       ref="$table"
       v-model:query-items="queryItems"
       :scroll-x="1200"
       :columns="columns"
       :get-data="api.read"
     >
-      <MeQueryItem label="用户名" :label-width="50">
+      <me-query-item label="用户名" :label-width="50">
         <n-input
           v-model:value="queryItems.username"
           type="text"
           placeholder="请输入用户名"
           clearable
         />
-      </MeQueryItem>
+      </me-query-item>
 
-      <MeQueryItem label="性别" :label-width="50">
+      <me-query-item label="性别" :label-width="50">
         <n-select v-model:value="queryItems.gender" clearable :options="genders" />
-      </MeQueryItem>
+      </me-query-item>
 
-      <MeQueryItem label="状态" :label-width="50">
+      <me-query-item label="状态" :label-width="50">
         <n-select
           v-model:value="queryItems.enable"
           clearable
@@ -36,10 +36,10 @@
             { label: '停用', value: 0 },
           ]"
         />
-      </MeQueryItem>
-    </MeCrud>
+      </me-query-item>
+    </me-crud>
 
-    <MeModal ref="modalRef" width="520px">
+    <me-modal ref="modalRef" width="520px">
       <n-form
         ref="modalFormRef"
         label-placement="left"
@@ -84,21 +84,21 @@
           />
         </n-form-item>
         <n-form-item v-if="modalAction === 'add'" label="状态" path="enable">
-          <NSwitch v-model:value="modalForm.enable">
+          <n-switch v-model:value="modalForm.enable">
             <template #checked>
               启用
             </template>
             <template #unchecked>
               停用
             </template>
-          </NSwitch>
+          </n-switch>
         </n-form-item>
       </n-form>
       <n-alert v-if="modalAction === 'add'" type="warning" closable>
         详细信息需由用户本人补充修改
       </n-alert>
-    </MeModal>
-  </CommonPage>
+    </me-modal>
+  </common-page>
 </template>
 
 <script setup>

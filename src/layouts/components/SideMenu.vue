@@ -53,7 +53,7 @@ function handleMenuSelect(key, item) {
 }
 </script>
 
-<style>
+<style lang="scss" scoped>
 .side-menu {
   /* 确保菜单图标和文字垂直居中对齐 */
   .n-menu-item-content__icon {
@@ -135,7 +135,12 @@ function handleMenuSelect(key, item) {
 .side-menu.n-menu--collapsed {
   .n-menu-item-content {
     justify-content: center;
+    padding-inline: 0 !important;
     margin: 8px 4px;
+  }
+
+  .n-menu-item-content__icon {
+    margin: 0 !important;
   }
 
   .n-menu-item-content:hover {

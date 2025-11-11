@@ -9,7 +9,7 @@
     </div>
   </n-dropdown>
 
-  <RoleSelect ref="roleSelectRef" />
+  <role-select ref="roleSelectRef" />
 </template>
 
 <script setup>

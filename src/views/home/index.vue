@@ -1,5 +1,5 @@
 <template>
-  <AppPage show-footer />
+  <common-page />
 </template>
 
 <script setup>

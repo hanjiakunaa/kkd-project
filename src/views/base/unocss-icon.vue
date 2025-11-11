@@ -1,5 +1,5 @@
 <template>
-  <CommonPage show-footer>
+  <common-page show-footer>
     <template #title-suffix>
       <n-tooltip
         placement="bottom"
@@ -30,7 +30,7 @@
         </span>
       </li>
     </ul>
-  </CommonPage>
+  </common-page>
 </template>
 
 <script setup>

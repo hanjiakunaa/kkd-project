@@ -1,6 +1,6 @@
 <template>
   <main class="h-full flex-col flex-1 overflow-hidden bg-#f5f6fb dark:bg-#121212">
-    <AppCard
+    <app-card
       v-if="showHeader"
       class="sticky top-0 z-1 min-h-60 flex items-center justify-between px-24"
       border-b="1px solid light_border dark:dark_border"
@@ -28,15 +28,15 @@
         </div>
         <slot name="action" />
       </template>
-    </AppCard>
-    <AppCard class="cus-scroll m-12 h-0 flex-1 rounded-8 p-24" bordered>
+    </app-card>
+    <app-card class="cus-scroll m-12 h-0 flex-1 rounded-8 p-24" bordered>
       <slot />
-    </AppCard>
+    </app-card>
 
     <slot name="footer">
-      <AppCard v-if="showFooter" class="flex-shrink-0 py-12">
-        <TheFooter />
-      </AppCard>
+      <app-card v-if="showFooter" class="flex-shrink-0 py-12">
+        <the-footer />
+      </app-card>
     </slot>
   </main>
 </template>

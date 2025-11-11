@@ -9,34 +9,36 @@
     操作指引
   </n-tooltip>
 
-  <Vue3IntroStep
-    ref="myIntroStep"
-    v-model:show="show"
-    :config="config"
-  >
-    <template #prev="{ tipItem, index }">
-      <NButton class="mr-12" type="primary" color="#fff" text-color="#fff" ghost round size="small" @click="prev(tipItem, index)">
-        上一步
-      </NButton>
-    </template>
-    <template #next="{ tipItem }">
-      <NButton class="mr-12" type="primary" color="#fff" text-color="#fff" ghost round size="small" @click="next(tipItem)">
-        下一步
-      </NButton>
-    </template>
+  <teleport to="body">
+    <vue3-intro-step
+      ref="myIntroStep"
+      v-model:show="show"
+      :config="config"
+    >
+      <template #prev="{ tipItem, index }">
+        <n-button class="mr-12" type="primary" color="#fff" text-color="#fff" ghost round size="small" @click="prev(tipItem, index)">
+          上一步
+        </n-button>
+      </template>
+      <template #next="{ tipItem }">
+        <n-button class="mr-12" type="primary" color="#fff" text-color="#fff" ghost round size="small" @click="next(tipItem)">
+          下一步
+        </n-button>
+      </template>
 
-    <template #skip>
-      <NButton type="primary" color="#fff" text-color="#fff" ghost round size="small" @click="skip">
-        跳过
-      </NButton>
-    </template>
+      <template #skip>
+        <n-button type="primary" color="#fff" text-color="#fff" ghost round size="small" @click="skip">
+          跳过
+        </n-button>
+      </template>
 
-    <template #done>
-      <NButton type="primary" color="#fff" text-color="#fff" ghost round size="small" @click="done">
-        完成
-      </NButton>
-    </template>
-  </Vue3IntroStep>
+      <template #done>
+        <n-button type="primary" color="#fff" text-color="#fff" ghost round size="small" @click="done">
+          完成
+        </n-button>
+      </template>
+    </vue3-intro-step>
+  </teleport>
 </template>
 
 <script setup>
@@ -45,6 +47,7 @@ import Vue3IntroStep from 'vue3-intro-step'
 const myIntroStep = shallowRef(null)
 const show = shallowRef(false)
 const config = {
+  appendTo: 'body',
   backgroundOpacity: 0.8,
   titleStyle: {
     textAlign: 'left',

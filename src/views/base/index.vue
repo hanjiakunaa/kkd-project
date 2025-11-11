@@ -1,5 +1,5 @@
 <template>
-  <CommonPage show-footer>
+  <common-page show-footer>
     <n-space size="large">
       <n-card title="按钮 Button">
         <n-space>
@@ -84,7 +84,7 @@
         </n-space>
       </n-card>
     </n-space>
-  </CommonPage>
+  </common-page>
 </template>
 
 <script setup>

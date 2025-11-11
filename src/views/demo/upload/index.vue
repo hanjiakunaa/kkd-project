@@ -1,5 +1,5 @@
 <template>
-  <CommonPage>
+  <common-page>
     <n-upload
       class="mx-auto w-[75%] p-20 text-center"
       :custom-request="handleUpload"
@@ -44,7 +44,7 @@
         </n-space>
       </n-image-group>
     </n-card>
-  </CommonPage>
+  </common-page>
 </template>
 
 <script setup>

@@ -1,23 +1,23 @@
 <template>
-  <AppCard class="flex items-center px-12" border-b="1px solid light_border dark:dark_border">
-    <MenuCollapse />
+  <app-card class="flex items-center px-12" border-b="1px solid light_border dark:dark_border">
+    <menu-collapse />
 
-    <AppTab class="w-0 flex-1 px-12" />
+    <app-tab class="w-0 flex-1 px-12" />
 
     <span class="mx-6 opacity-20">|</span>
 
     <div class="flex flex-shrink-0 items-center px-12 text-18">
-      <BeginnerGuide />
+      <beginner-guide />
 
-      <ToggleTheme />
+      <toggle-theme />
 
-      <Fullscreen />
+      <fullscreen />
 
-      <ThemeSetting class="mr-16" />
+      <theme-setting class="mr-16" />
 
-      <UserAvatar />
+      <user-avatar />
     </div>
-  </AppCard>
+  </app-card>
 </template>
 
 <script setup>

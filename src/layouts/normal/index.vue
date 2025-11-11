@@ -4,11 +4,11 @@
       class="modern-sidebar flex-col flex-shrink-0 transition-width-300"
       :class="appStore.collapsed ? 'w-64' : 'w-220'"
     >
-      <SideBar />
+      <side-bar />
     </aside>
 
     <article class="modern-content w-0 flex-col flex-1">
-      <AppHeader class="modern-header h-60 flex-shrink-0" />
+      <app-header class="modern-header h-60 flex-shrink-0" />
       <slot />
     </article>
   </div>

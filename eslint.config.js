@@ -4,6 +4,13 @@ export default antfu({
   unocss: true,
   formatters: true,
   stylistic: true,
+  vue: {
+    overrides: {
+      'vue/component-name-in-template-casing': ['error', 'kebab-case', {
+        registeredComponentsOnly: false,
+      }],
+    },
+  },
   rules: {
     'n/prefer-global/process': 'off',
     'no-undef': 'error',

@@ -1,23 +1,23 @@
 <template>
-  <CommonPage>
+  <common-page>
     <template #action>
-      <NButton type="primary" @click="handleAdd()">
+      <n-button type="primary" @click="handleAdd()">
         <i class="i-material-symbols:add mr-4 text-18" />
         新增角色
-      </NButton>
+      </n-button>
     </template>
 
-    <MeCrud
+    <me-crud
       ref="$table"
       v-model:query-items="queryItems"
       :scroll-x="1200"
       :columns="columns"
       :get-data="api.read"
     >
-      <MeQueryItem label="角色名" :label-width="50">
+      <me-query-item label="角色名" :label-width="50">
         <n-input v-model:value="queryItems.name" type="text" placeholder="请输入角色名" clearable />
-      </MeQueryItem>
-      <MeQueryItem label="状态" :label-width="50">
+      </me-query-item>
+      <me-query-item label="状态" :label-width="50">
         <n-select
           v-model:value="queryItems.enable"
           clearable
@@ -26,9 +26,9 @@
             { label: '停用', value: 0 },
           ]"
         />
-      </MeQueryItem>
-    </MeCrud>
-    <MeModal ref="modalRef" width="520px">
+      </me-query-item>
+    </me-crud>
+    <me-modal ref="modalRef" width="520px">
       <n-form
         ref="modalFormRef"
         label-placement="left"
@@ -72,18 +72,18 @@
           />
         </n-form-item>
         <n-form-item label="状态" path="enable">
-          <NSwitch v-model:value="modalForm.enable">
+          <n-switch v-model:value="modalForm.enable">
             <template #checked>
               启用
             </template>
             <template #unchecked>
               停用
             </template>
-          </NSwitch>
+          </n-switch>
         </n-form-item>
       </n-form>
-    </MeModal>
-  </CommonPage>
+    </me-modal>
+  </common-page>
 </template>
 
 <script setup>

@@ -1,15 +1,15 @@
 <template>
-  <CommonPage show-footer>
+  <common-page show-footer>
     <n-button type="primary" @click="openModal1">
       打开第一个弹个窗
     </n-button>
-    <MeModal ref="$modal1">
+    <me-modal ref="$modal1">
       <n-input v-model:value="text" />
-    </MeModal>
-    <MeModal ref="$modal2" title="上一个弹窗提交的内容">
+    </me-modal>
+    <me-modal ref="$modal2" title="上一个弹窗提交的内容">
       <h2>{{ text }}</h2>
-    </MeModal>
-  </CommonPage>
+    </me-modal>
+  </common-page>
 </template>
 
 <script setup>

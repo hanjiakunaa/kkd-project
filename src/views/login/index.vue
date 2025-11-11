@@ -91,7 +91,7 @@
       </div>
     </div>
 
-    <TheFooter class="py-12" />
+    <the-footer class="py-12" />
   </div>
 </template>
 

@@ -1,17 +1,17 @@
 <template>
-  <CommonPage back>
+  <common-page back>
     <template #title-suffix>
-      <NTag class="ml-12" type="warning">
+      <n-tag class="ml-12" type="warning">
         {{ route.query.roleName }}
-      </NTag>
+      </n-tag>
     </template>
     <template #action>
       <div class="flex items-center">
-        <NButton :disabled="!userIds.length" type="error" @click="handleBatchRemove()">
+        <n-button :disabled="!userIds.length" type="error" @click="handleBatchRemove()">
           <i v-if="userIds.length" class="i-material-symbols:delete-outline mr-4 text-18" />
           批量取消授权
-        </NButton>
-        <NButton
+        </n-button>
+        <n-button
           class="ml-12"
           :disabled="!userIds.length"
           type="primary"
@@ -19,11 +19,11 @@
         >
           <i v-if="userIds.length" class="i-line-md:confirm-circle mr-4 text-18" />
           批量授权
-        </NButton>
+        </n-button>
       </div>
     </template>
 
-    <MeCrud
+    <me-crud
       ref="$table"
       v-model:query-items="queryItems"
       :scroll-x="1200"
@@ -31,20 +31,20 @@
       :get-data="api.getAllUsers"
       @on-checked="onChecked"
     >
-      <MeQueryItem label="用户名" :label-width="50">
+      <me-query-item label="用户名" :label-width="50">
         <n-input
           v-model:value="queryItems.username"
           type="text"
           placeholder="请输入用户名"
           clearable
         />
-      </MeQueryItem>
+      </me-query-item>
 
-      <MeQueryItem label="性别" :label-width="50">
+      <me-query-item label="性别" :label-width="50">
         <n-select v-model:value="queryItems.gender" clearable :options="genders" />
-      </MeQueryItem>
+      </me-query-item>
 
-      <MeQueryItem label="状态" :label-width="50">
+      <me-query-item label="状态" :label-width="50">
         <n-select
           v-model:value="queryItems.enable"
           clearable
@@ -53,9 +53,9 @@
             { label: '停用', value: 0 },
           ]"
         />
-      </MeQueryItem>
-    </MeCrud>
-  </CommonPage>
+      </me-query-item>
+    </me-crud>
+  </common-page>
 </template>
 
 <script setup>

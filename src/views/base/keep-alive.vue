@@ -1,5 +1,5 @@
 <template>
-  <CommonPage show-footer>
+  <common-page show-footer>
     <div w-350>
       <n-input v-model:value="inputVal" />
       <n-input-number v-model:value="number" mt-30 />
@@ -7,7 +7,7 @@
         注：右击标签重新加载可重置keep-alive
       </p>
     </div>
-  </CommonPage>
+  </common-page>
 </template>
 
 <script setup>

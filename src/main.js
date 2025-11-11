@@ -1,7 +1,8 @@
-import { createApp, nextTick } from 'vue'
+import { createApp } from 'vue'
 import App from './App.vue'
 import { setupDirectives } from './directives'
 
+import { setupGlobalComponents } from './plugins/components'
 import { conponentIconPlugins } from './plugins/icons'
 import { setupRouter } from './router'
 import { setupStore } from './store'
@@ -14,6 +15,8 @@ import 'uno.css'
 async function bootstrap() {
   const app = createApp(App)
 
+  // 注册全局通用组件
+  app.use(setupGlobalComponents)
   // 先注册图标组件，确保在渲染菜单前可用
   app.use(conponentIconPlugins)
 
@@ -22,13 +25,6 @@ async function bootstrap() {
   await setupRouter(app)
   app.mount('#app')
   setupNaiveDiscreteApi()
-
-  // 应用加载完成后，隐藏 loading
-  // 使用 nextTick 确保 Vue 应用已完全渲染
-  await nextTick()
-  if (window.hideLoading) {
-    window.hideLoading()
-  }
 }
 
 bootstrap()

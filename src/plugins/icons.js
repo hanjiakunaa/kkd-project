@@ -1,7 +1,7 @@
 import { addIcons, OhVueIcon } from 'oh-vue-icons'
 import {
+  BiCodeSlash,
   FaBookmark, // 书签
-  FaCloudUploadAlt, // 上传
   FaCompress, // 退出全屏
   FaExchangeAlt, // 切换
   FaExpand, // 全屏
@@ -21,13 +21,15 @@ import {
   FaUser, // 用户/个人
   FaUsers, // 角色/多用户
   FcHome, // 首页
+  MdMorevert,
   PiGastly, // logo
+  PrCloudUpload, // 云上传
+  ViFileTypeVscode,
 } from 'oh-vue-icons/icons'
 
 addIcons(
   FcHome,
   FaBookmark,
-  FaCloudUploadAlt,
   FaCompress,
   FaExchangeAlt,
   FaExpand,
@@ -47,6 +49,10 @@ addIcons(
   FaUser,
   FaUsers,
   PiGastly,
+  PrCloudUpload,
+  ViFileTypeVscode,
+  MdMorevert,
+  BiCodeSlash,
 )
 
 export const conponentIconPlugins = {

@@ -1,5 +1,5 @@
 <template>
-  <CommonPage :show-header="false">
+  <common-page :show-header="false">
     <div class="wh-full flex">
       <n-result
         class="m-auto"
@@ -18,7 +18,7 @@
         </template>
       </n-result>
     </div>
-  </CommonPage>
+  </common-page>
 </template>
 
 <script setup>
