@@ -9,7 +9,6 @@
 
       <div class="w-320 flex-col px-20 py-32">
         <h2 class="f-c-c text-24 text-#6a6a6a font-normal">
-          <!-- <img src="@/assets/images/logo.png" class="mr-12 h-50"> -->
           <h-icon name="pi-gastly" :scale="2" :hover="true" animation="ring" speed="slow" />
 
           {{ title }}

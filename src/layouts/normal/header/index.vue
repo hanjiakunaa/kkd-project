@@ -2,7 +2,7 @@
   <app-card class="relative flex items-center px-12" border-b="1px solid light_border dark:dark_border">
     <menu-collapse />
 
-    <app-tab class="w-0 flex-1 px-12 min-w-0" />
+    <app-tab class="min-w-0 w-0 flex-1 px-12" />
 
     <span class="mx-6 opacity-20">|</span>
 
@@ -17,13 +17,11 @@
 
       <user-avatar />
     </div>
-
-    <daily-quote class="header-center-quote" />
   </app-card>
 </template>
 
 <script setup>
-import { DailyQuote, ToggleTheme } from '@/components'
+import { ToggleTheme } from '@/components'
 import { AppTab, BeginnerGuide, Fullscreen, MenuCollapse, UserAvatar } from '@/layouts/components'
 </script>
 
