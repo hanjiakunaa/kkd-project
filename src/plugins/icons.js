@@ -24,8 +24,12 @@ import {
   MdMorevert,
   PiGastly, // logo
   PrCloudUpload, // 云上传
-  ViFileTypeVscode,
   PxPixelarticons,
+  ViFileTypeAppsemble,
+  ViFileTypeExcel, // excel
+  ViFileTypePdf2, // prd
+  ViFileTypeVscode,
+  ViFileTypeWord, // word icon
 } from 'oh-vue-icons/icons'
 
 addIcons(
@@ -55,6 +59,10 @@ addIcons(
   MdMorevert,
   BiCodeSlash,
   PxPixelarticons,
+  ViFileTypeAppsemble,
+  ViFileTypeWord, // word icon
+  ViFileTypePdf2, // prd
+  ViFileTypeExcel, // excel
 )
 
 export const conponentIconPlugins = {
