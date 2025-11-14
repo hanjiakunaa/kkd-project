@@ -2,7 +2,7 @@
   <div>
     <n-tooltip trigger="hover" placement="left">
       <template #trigger>
-        <div id="layout-view-source-code" :class="triggerClass" @click="viewCodeModalRef.open()">
+        <div id="layout-view-source-code" :class="triggerClass" @click="isOpenSourceCode">
           <h-icon name="bi-code-slash" class="text-20 text-white" />
         </div>
       </template>
@@ -54,6 +54,11 @@ async function viewSource(targetFile) {
   code.value = rawContent
 }
 
+function isOpenSourceCode() {
+  if (code.value !== '') {
+    viewCodeModalRef.value?.open()
+  }
+}
 // 或者
 watch(
   route,

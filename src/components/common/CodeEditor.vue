@@ -494,6 +494,29 @@ defineExpose({
 :deep(.cm-scroller) {
   font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
   line-height: 1.6;
+  /* Firefox 滚动条样式 */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(128, 128, 128, 0.3) transparent;
+}
+
+/* 滚动条样式 - 浅透明 */
+:deep(.cm-scroller)::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+:deep(.cm-scroller)::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+:deep(.cm-scroller)::-webkit-scrollbar-thumb {
+  background: rgba(128, 128, 128, 0.3);
+  border-radius: 4px;
+  transition: background 0.2s ease;
+}
+
+:deep(.cm-scroller)::-webkit-scrollbar-thumb:hover {
+  background: rgba(128, 128, 128, 0.5);
 }
 
 :deep(.cm-content) {
@@ -505,7 +528,7 @@ defineExpose({
 }
 
 :deep(.cm-gutters) {
-  background-color: transparent;
+  background-color: var(--n-color);
   border-right: 1px solid var(--n-border-color);
   padding-right: 4px;
 }
