@@ -23,23 +23,6 @@
       class="flex-1"
       :row-key="row => row.id"
     />
-
-    <me-modal
-      ref="previewModalRef"
-      title="导出为图片"
-      width="50vw"
-      :show-footer="false"
-    >
-      <div class="preview-body">
-        <component
-          :is="currentPreviewComponent"
-          v-if="currentPreviewComponent"
-          :file="currentFile"
-          class="preview-body"
-        />
-        <n-empty v-else description="当前文件类型暂不支持预览" />
-      </div>
-    </me-modal>
   </common-page>
 </template>
 
@@ -48,29 +31,13 @@ import dayjs from 'dayjs'
 import { NButton } from 'naive-ui'
 import { OhVueIcon } from 'oh-vue-icons'
 import { onBeforeUnmount } from 'vue'
-import { MeModal } from '@/components'
-import { useModal } from '@/composables'
-import ExcelPreview from './components/excel.vue'
-import MarkdownPreview from './components/md.vue'
-import PdfPreview from './components/pdf.vue'
-import TxtPreview from './components/txt.vue'
-import WordPreview from './components/word.vue'
 
 defineOptions({ name: 'MultiFilePreview' })
 
 const supportedExtensions = ['pdf', 'txt', 'md', 'docx', 'xls', 'xlsx']
-const previewComponentMap = {
-  pdf: PdfPreview,
-  txt: TxtPreview,
-  md: MarkdownPreview,
-  docx: WordPreview,
-  xls: ExcelPreview,
-  xlsx: ExcelPreview,
-}
 
 const fileList = ref([])
 const currentFile = ref(null)
-const [previewModalRef] = useModal()
 
 const columns = [
   {
@@ -134,12 +101,6 @@ const columns = [
   },
 ]
 
-const currentPreviewComponent = computed(() => {
-  if (!currentFile.value)
-    return null
-  return previewComponentMap[currentFile.value.extension] || null
-})
-
 // oh-vue-icons 图标名称映射
 const fileIconNameMap = {
   pdf: 'vi-file-type-pdf2',
@@ -173,7 +134,6 @@ function formatBytes(bytes) {
 
 function handlePreview(row) {
   currentFile.value = row
-  previewModalRef.value?.open()
 }
 
 function resetPreview() {
@@ -192,7 +152,6 @@ function removeFile(id) {
   if (removed?.objectUrl)
     URL.revokeObjectURL(removed.objectUrl)
   if (currentFile.value?.id === removed?.id) {
-    previewModalRef.value?.close()
     resetPreview()
   }
   $message.success('已移除文件')
