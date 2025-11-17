@@ -2,3 +2,9 @@
 node_modules
 dist
 stats.html
+.env
+.cursor
+.pnpm-store
+.vscode
+.idea
+.DS_Store
