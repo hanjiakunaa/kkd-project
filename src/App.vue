@@ -9,14 +9,22 @@
     <router-view v-if="Layout" v-slot="{ Component, route: curRoute }">
       <component :is="Layout">
         <transition name="fade-slide" mode="out-in" appear>
-          <keep-alive :include="keepAliveNames">
-            <component :is="Component" v-if="!tabStore.reloading" :key="curRoute.fullPath" />
-          </keep-alive>
+          <component
+            :is="Component"
+            v-if="!tabStore.reloading"
+            :key="curRoute.fullPath"
+          />
         </transition>
       </component>
 
-      <layout-setting v-if="layoutSettingVisible && !hideLayoutTools" class="fixed right-12 top-1/2 z-999" />
-      <layout-view-source-code v-if="layoutViewSourceCodeVisible && !hideLayoutTools" class="fixed right-12 top-1/2.3 z-999" />
+      <layout-setting
+        v-if="layoutSettingVisible && !hideLayoutTools"
+        class="fixed right-12 top-1/2 z-999"
+      />
+      <layout-view-source-code
+        v-if="layoutViewSourceCodeVisible && !hideLayoutTools"
+        class="fixed right-12 top-1/2.3 z-999"
+      />
     </router-view>
   </n-config-provider>
 </template>
@@ -32,7 +40,9 @@ function getLayout(name) {
   // 利用map将加载过的layout缓存起来，防止重新加载layout导致页面闪烁
   if (layouts.get(name))
     return layouts.get(name)
-  const layout = markRaw(defineAsyncComponent(() => import(`@/layouts/${name}/index.vue`)))
+  const layout = markRaw(
+    defineAsyncComponent(() => import(`@/layouts/${name}/index.vue`)),
+  )
   layouts.set(name, layout)
   return layout
 }
@@ -48,10 +58,8 @@ const Layout = computed(() => {
 })
 
 const tabStore = useTabStore()
-const keepAliveNames = computed(() => {
-  return tabStore.tabs.filter(item => item.keepAlive).map(item => item.name)
-})
 
+// 判断是否隐藏布局工具
 const hideLayoutTools = computed(() => {
   if (!route.name)
     return route.path === '/login'

@@ -44,7 +44,6 @@ export async function getPermissions() {
       order: 0,
       enable: true,
       show: true,
-      keepAlive: false,
     },
     {
       id: 2,
@@ -57,7 +56,6 @@ export async function getPermissions() {
       order: 1,
       enable: true,
       show: true,
-      keepAlive: false,
       children: [
         {
           id: 21,
@@ -70,7 +68,6 @@ export async function getPermissions() {
           order: 1,
           enable: true,
           show: true,
-          keepAlive: false,
         },
         {
           id: 22,
@@ -83,20 +80,20 @@ export async function getPermissions() {
           order: 2,
           enable: true,
           show: true,
-          keepAlive: false,
         },
         {
           id: 23,
-          code: 'base-keep-alive',
-          name: 'KeepAlive',
+          code: 'BasePageCache',
+          name: '页面缓存',
           type: 'MENU',
-          path: '/base/keep-alive',
-          component: '/src/views/base/keep-alive.vue',
-          icon: 'fa-bookmark',
+          path: '/base/page-cache',
+          component: '/src/views/base/page-cache.vue',
+          icon: 'bi-clipboard-2-data',
           order: 3,
           enable: true,
           show: true,
-          keepAlive: true,
+          // 需要页面缓存加上这个字段，useCache: true
+          useCache: true,
         },
         {
           id: 24,
@@ -109,7 +106,6 @@ export async function getPermissions() {
           order: 4,
           enable: true,
           show: true,
-          keepAlive: false,
         },
       ],
     },
@@ -135,7 +131,6 @@ export async function getPermissions() {
           order: 1,
           enable: true,
           show: true,
-          keepAlive: false,
         },
         {
           id: 32,
@@ -148,7 +143,6 @@ export async function getPermissions() {
           order: 2,
           enable: true,
           show: true,
-          keepAlive: false,
         },
         {
           id: 33,
@@ -161,7 +155,6 @@ export async function getPermissions() {
           order: 3,
           enable: true,
           show: true,
-          keepAlive: false,
         },
       ],
     },
@@ -187,7 +180,6 @@ export async function getPermissions() {
           order: 1,
           enable: true,
           show: true,
-          keepAlive: false,
         },
         {
           id: 42,
@@ -200,7 +192,6 @@ export async function getPermissions() {
           order: 2,
           enable: true,
           show: true,
-          keepAlive: false,
         },
         {
           id: 44,
@@ -213,7 +204,6 @@ export async function getPermissions() {
           order: 4,
           enable: true,
           show: true,
-          keepAlive: false,
         },
         {
           id: 45,
@@ -226,7 +216,6 @@ export async function getPermissions() {
           order: 5,
           enable: true,
           show: true,
-          keepAlive: false,
         },
       ],
     },
@@ -241,7 +230,6 @@ export async function getPermissions() {
       order: 99,
       enable: true,
       show: false,
-      keepAlive: false,
     },
   ]
 }

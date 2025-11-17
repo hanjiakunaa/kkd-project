@@ -8,6 +8,9 @@ export const layoutSettingVisible = true
 // 控制 LayoutViewSourceCode 组件是否可见
 export const layoutViewSourceCodeVisible = true
 
+// 页面缓存自动保存开关（默认开启）
+export const defaultPageCacheAutoSave = true
+
 export const naiveThemeOverrides = {
   common: {
     primaryColor: '#316C72FF',

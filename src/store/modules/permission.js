@@ -80,7 +80,7 @@ export const usePermissionStore = defineStore('permission', {
           icon: item.icon,
           title: item.name,
           layout: item.layout,
-          keepAlive: !!item.keepAlive,
+          useCache: !!item.useCache || !!item.keepAlive, // 兼容旧的 keepAlive 字段
           parentKey,
           componentPath: item.component,
           btns: item.children

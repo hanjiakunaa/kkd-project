@@ -1,7 +1,7 @@
 import { generate, getRgbStr } from '@arco-design/color'
 import { useDark } from '@vueuse/core'
 import { defineStore } from 'pinia'
-import { defaultLayout, defaultPrimaryColor, naiveThemeOverrides } from '@/settings'
+import { defaultLayout, defaultPageCacheAutoSave, defaultPrimaryColor, naiveThemeOverrides } from '@/settings'
 
 export const useAppStore = defineStore('app', {
   state: () => ({
@@ -11,6 +11,7 @@ export const useAppStore = defineStore('app', {
     primaryColor: defaultPrimaryColor,
     naiveThemeOverrides,
     themeAnimationType: 'horizontal', // 'horizontal' 横切 or 'circle' 圆形扩散
+    pageCacheAutoSave: defaultPageCacheAutoSave, // 页面缓存自动保存开关
   }),
   actions: {
     switchCollapsed() {
@@ -44,9 +45,12 @@ export const useAppStore = defineStore('app', {
         primaryColorPressed: colors[6],
       })
     },
+    setPageCacheAutoSave(enabled) {
+      this.pageCacheAutoSave = enabled
+    },
   },
   persist: {
-    pick: ['collapsed', 'layout', 'primaryColor', 'naiveThemeOverrides', 'themeAnimationType'],
+    pick: ['collapsed', 'layout', 'primaryColor', 'naiveThemeOverrides', 'themeAnimationType', 'pageCacheAutoSave'],
     storage: sessionStorage,
   },
 })

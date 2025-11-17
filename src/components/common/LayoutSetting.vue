@@ -6,10 +6,13 @@
           <i class="i-fe:settings cursor-pointer bg-white text-20" />
         </div>
       </template>
-      布局设置
+      系统设置
     </n-tooltip>
 
-    <me-modal ref="modalRef" title="布局设置" :show-footer="false" width="600px">
+    <me-modal ref="modalRef" title="系统设置" :show-footer="false" width="600px">
+      <div class="mb-12">
+        <span class="font-bold">布局设置</span>
+      </div>
       <n-space justify="space-between">
         <div class="flex-col cursor-pointer justify-center" @click="appStore.setLayout('simple')">
           <div class="flex">
@@ -166,15 +169,105 @@
           </n-button>
         </div>
       </n-space>
+
+      <n-divider />
+
+      <div class="mb-12">
+        <span class="font-bold">页面缓存设置</span>
+      </div>
+      <n-space justify="space-between" align="center">
+        <div>
+          <div class="mb-4">
+            自动保存页面数据
+          </div>
+          <div class="text-12 opacity-50">
+            开启后，页面数据会自动保存到 IndexedDB，切换页面后返回数据会保留
+          </div>
+        </div>
+        <n-switch :value="appStore.pageCacheAutoSave" @update:value="handleToggleAutoSave" />
+      </n-space>
     </me-modal>
   </div>
 </template>
 
 <script setup>
+import { NButton } from 'naive-ui'
 import { MeModal } from '@/components'
 import { useModal } from '@/composables'
 import { useAppStore } from '@/store'
+import { pageCacheDB } from '@/utils/storage/indexedDB'
 
 const appStore = useAppStore()
 const [modalRef] = useModal()
+
+// 处理自动保存开关切换
+function handleToggleAutoSave(newValue) {
+  // 如果是从关闭切换到开启，直接切换
+  if (newValue && !appStore.pageCacheAutoSave) {
+    appStore.setPageCacheAutoSave(true)
+    return
+  }
+
+  // 如果是从开启切换到关闭，弹出确认对话框
+  if (!newValue && appStore.pageCacheAutoSave) {
+    const dialogInstance = $dialog.warning({
+      title: '切换自动缓存设置',
+      content: '切换自动缓存设置时，是否需要清空已保存的缓存数据？',
+      positiveText: '',
+      negativeText: '',
+      showIcon: true,
+      action: () => {
+        return h('div', { style: 'display: flex; justify-content: flex-end; gap: 12px;' }, [
+          h(
+            NButton,
+            {
+              type: 'error',
+              onClick: async () => {
+                try {
+                  // 清空所有缓存数据
+                  if (pageCacheDB.isSupported()) {
+                    await pageCacheDB.clear()
+                    $message.success('缓存数据已清空')
+                  }
+                  // 切换开关状态
+                  appStore.setPageCacheAutoSave(false)
+                  dialogInstance.destroy()
+                }
+                catch (error) {
+                  console.error('清空缓存失败:', error)
+                  $message.error('清空缓存失败')
+                }
+              },
+            },
+            { default: () => '确定（清空缓存）' },
+          ),
+          h(
+            NButton,
+            {
+              type: 'warning',
+              onClick: () => {
+                // 只切换开关，不清空数据
+                appStore.setPageCacheAutoSave(false)
+                $message.info('已切换为手动缓存模式')
+                dialogInstance.destroy()
+              },
+            },
+            { default: () => '手动清除（仅切换）' },
+          ),
+          h(
+            NButton,
+            {
+              type: 'default',
+              onClick: () => {
+                // 取消操作
+                dialogInstance.destroy()
+              },
+            },
+            { default: () => '取消' },
+          ),
+        ])
+      },
+    })
+  }
+}
 </script>

@@ -1,5 +1,6 @@
 import { addIcons, OhVueIcon } from 'oh-vue-icons'
 import {
+  BiClipboard2Data,
   BiCodeSlash,
   FaBookmark, // 书签
   FaCompress, // 退出全屏
@@ -63,6 +64,7 @@ addIcons(
   ViFileTypeWord, // word icon
   ViFileTypePdf2, // prd
   ViFileTypeExcel, // excel
+  BiClipboard2Data,
 )
 
 export const conponentIconPlugins = {

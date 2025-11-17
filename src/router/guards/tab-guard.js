@@ -10,7 +10,7 @@ export function createTabGuard(router) {
     const { name, fullPath: path } = to
     const title = to.meta?.title
     const icon = to.meta?.icon
-    const keepAlive = to.meta?.keepAlive
-    tabStore.addTab({ name, path, title, icon, keepAlive })
+    const useCache = to.meta?.useCache || to.meta?.keepAlive // 兼容旧的 keepAlive 字段
+    tabStore.addTab({ name, path, title, icon, useCache })
   })
 }

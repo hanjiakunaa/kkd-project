@@ -30,18 +30,27 @@ export const useTabStore = defineStore('tab', {
       }
       this.setActiveTab(tab.path)
     },
-    async reloadTab(path, keepAlive) {
+    async reloadTab(path, useCache) {
       const findItem = this.tabs.find(item => item.path === path)
       if (!findItem)
         return
-      // 更新key可让keepAlive失效
-      if (keepAlive)
-        findItem.keepAlive = false
+      // 清除缓存数据
+      if (useCache && findItem.useCache) {
+        const { pageCacheDB } = await import('@/utils/storage/indexedDB')
+        const routeName = findItem.name
+        if (routeName && pageCacheDB.isSupported()) {
+          try {
+            await pageCacheDB.remove(routeName)
+          }
+          catch (error) {
+            console.error('[TabStore] 清除缓存失败:', error)
+          }
+        }
+      }
       $loadingBar.start()
       this.reloading = true
       await nextTick()
       this.reloading = false
-      findItem.keepAlive = !!keepAlive
       setTimeout(() => {
         document.documentElement.scrollTo({ left: 0, top: 0 })
         $loadingBar.finish()
