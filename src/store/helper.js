@@ -88,7 +88,7 @@ export async function getPermissions() {
           type: 'MENU',
           path: '/base/page-cache',
           component: '/src/views/base/page-cache.vue',
-          icon: 'bi-clipboard-2-data',
+          icon: 'bi-clipboard2-data',
           order: 3,
           enable: true,
           show: true,

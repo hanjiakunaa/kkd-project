@@ -6,26 +6,28 @@
     :theme="appStore.isDark ? darkTheme : undefined"
     :theme-overrides="appStore.naiveThemeOverrides"
   >
-    <router-view v-if="Layout" v-slot="{ Component, route: curRoute }">
-      <component :is="Layout">
-        <transition name="fade-slide" mode="out-in" appear>
-          <component
-            :is="Component"
-            v-if="!tabStore.reloading"
-            :key="curRoute.fullPath"
-          />
-        </transition>
-      </component>
+    <n-notification-provider>
+      <router-view v-if="Layout" v-slot="{ Component, route: curRoute }">
+        <component :is="Layout">
+          <transition name="fade-slide" mode="out-in" appear>
+            <component
+              :is="Component"
+              v-if="!tabStore.reloading"
+              :key="curRoute.fullPath"
+            />
+          </transition>
+        </component>
 
-      <layout-setting
-        v-if="layoutSettingVisible && !hideLayoutTools"
-        class="fixed right-12 top-1/2 z-999"
-      />
-      <layout-view-source-code
-        v-if="layoutViewSourceCodeVisible && !hideLayoutTools"
-        class="fixed right-12 top-1/2.3 z-999"
-      />
-    </router-view>
+        <layout-setting
+          v-if="layoutSettingVisible && !hideLayoutTools"
+          class="fixed right-12 top-1/2 z-999"
+        />
+        <layout-view-source-code
+          v-if="layoutViewSourceCodeVisible && !hideLayoutTools"
+          class="fixed right-12 top-1/2.3 z-999"
+        />
+      </router-view>
+    </n-notification-provider>
   </n-config-provider>
 </template>
 

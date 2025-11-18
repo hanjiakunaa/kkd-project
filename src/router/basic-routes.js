@@ -37,4 +37,31 @@ export const basicRoutes = [
       layout: 'empty',
     },
   },
+  {
+    name: 'pdf',
+    path: '/demo/muti-file-perview/pdf-preview',
+    component: () => import('@/views/demo/muti-file-perview/components/pdf.vue'),
+    meta: {
+      title: 'PDF预览',
+      layout: 'empty',
+    },
+  },
+  {
+    name: 'word',
+    path: '/demo/muti-file-perview/word-preview',
+    component: () => import('@/views/demo/muti-file-perview/components/word.vue'),
+    meta: {
+      title: 'Word预览',
+      layout: 'empty',
+    },
+  },
+  {
+    name: 'excel',
+    path: '/demo/muti-file-perview/excel-preview',
+    component: () => import('@/views/demo/muti-file-perview/components/excel.vue'),
+    meta: {
+      title: 'Excel预览',
+      layout: 'empty',
+    },
+  },
 ]

@@ -33,7 +33,7 @@ import { OhVueIcon } from 'oh-vue-icons'
 import { onBeforeUnmount } from 'vue'
 
 defineOptions({ name: 'MultiFilePreview' })
-
+const router = useRouter()
 const supportedExtensions = ['pdf', 'txt', 'md', 'docx', 'xls', 'xlsx']
 
 const fileList = ref([])
@@ -111,6 +111,12 @@ const fileIconNameMap = {
   txt: 'bi-code-slash', // 使用已注册的代码图标
 }
 
+const previewComponentMap = {
+  pdf: '/demo/muti-file-perview/pdf-preview',
+  docx: '/demo/muti-file-perview/word-preview',
+  xlsx: '/demo/muti-file-perview/excel-preview',
+}
+
 // 获取 oh-vue-icons 图标名称
 function getFileIconName(extension = '') {
   return fileIconNameMap[extension] || 'bi-code-slash'
@@ -134,6 +140,14 @@ function formatBytes(bytes) {
 
 function handlePreview(row) {
   currentFile.value = row
+  // 对文件对象进行浅拷贝，避免循环引用
+  const fileForRoute = { ...row, rawFile: null } // 移除 rawFile（避免序列化问题）
+  router.push({
+    path: previewComponentMap[getExtension(row.name)],
+    query: {
+      file: JSON.stringify(fileForRoute),
+    },
+  })
 }
 
 function resetPreview() {
