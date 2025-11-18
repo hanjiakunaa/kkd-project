@@ -299,9 +299,6 @@ async function loadPdfFromRoute() {
         url = ''
       }
     }
-    // 路由未传文件时，默认加载 public 下的 11.pdf
-    if (!url)
-      url = '/11.pdf'
     loading.value = true
     const loadingTask = pdfjsLib.getDocument({
       url,

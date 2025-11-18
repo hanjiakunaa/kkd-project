@@ -107,6 +107,7 @@ const fileIconNameMap = {
   docx: 'vi-file-type-word',
   xls: 'vi-file-type-excel',
   xlsx: 'vi-file-type-excel',
+  cvs: 'vi-file-type-excel',
   md: 'bi-code-slash', // 使用已注册的代码图标
   txt: 'bi-code-slash', // 使用已注册的代码图标
 }
@@ -115,6 +116,8 @@ const previewComponentMap = {
   pdf: '/demo/muti-file-perview/pdf-preview',
   docx: '/demo/muti-file-perview/word-preview',
   xlsx: '/demo/muti-file-perview/excel-preview',
+  xls: '/demo/muti-file-perview/excel-preview',
+  cvs: '/demo/muti-file-perview/excel-preview',
 }
 
 // 获取 oh-vue-icons 图标名称
@@ -194,7 +197,7 @@ function handleUpload({ file, onFinish, onError }) {
       uploadedAt: dayjs().format('YYYY-MM-DD HH:mm:ss'),
       rawFile,
       // 为 PDF 与 DOCX 创建 blob URL，便于预览页通过路由加载
-      objectUrl: ['pdf', 'docx'].includes(extension) ? URL.createObjectURL(rawFile) : '',
+      objectUrl: ['pdf', 'docx', 'xls', 'xlsx'].includes(extension) ? URL.createObjectURL(rawFile) : '',
     }
     fileList.value.unshift(record)
     $message.success('文件已添加，点击预览即可查看')
