@@ -150,6 +150,7 @@
   </div>
 </template>
 
+<!-- 组件说明：连续页面 PDF 预览（含缩放/目录/缩略图/下载/关闭） -->
 <script setup>
 import * as pdfjsLib from 'pdfjs-dist'
 import { TextLayerBuilder } from 'pdfjs-dist/web/pdf_viewer'
@@ -288,7 +289,8 @@ async function loadPdfFromRoute() {
     if (fileStr) {
       try {
         const fileData = JSON.parse(fileStr)
-        console.log('fileData', fileData)
+        // 提示：仅在预览调试时输出文件数据（使用 warn 符合规范）
+        console.warn('Preview file data', fileData)
 
         // 兼容父页面传递的不同字段：objectUrl / url / src / path
         url = fileData?.objectUrl || fileData?.url || fileData?.src || fileData?.path || ''
@@ -339,6 +341,11 @@ function calculateScale(page) {
   const viewport = page.getViewport({ scale: 1.0 })
   const pageWidth = viewport.width
   const pageHeight = viewport.height
+  // 缩放模式计算规则：
+  // - FIT_WIDTH：按容器宽度适配；
+  // - FIT_PAGE / AUTO：宽高中取较小值，保证整页可见；
+  // - ACTUAL_SIZE：返回 1；
+  // - 其它（自定义）：沿用当前 scale。
   if (zoomMode.value === ZOOM_MODE.FIT_WIDTH) {
     return containerWidth / pageWidth
   }
@@ -542,6 +549,7 @@ onBeforeUnmount(() => {
 
 onMounted(() => {
   loadPdfFromRoute()
+  // 监听内容容器尺寸变化，触发重新渲染以保持适配
   if (pdfViewer.value && typeof ResizeObserver !== 'undefined') {
     resizeObserver = new ResizeObserver(() => {
       if (pdfDoc.value && currentPage.value) {

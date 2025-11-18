@@ -106,6 +106,7 @@ export async function getPermissions() {
           order: 4,
           enable: true,
           show: true,
+          useCache: true,
         },
       ],
     },

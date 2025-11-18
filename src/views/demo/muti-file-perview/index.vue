@@ -193,7 +193,8 @@ function handleUpload({ file, onFinish, onError }) {
       sizeLabel: formatBytes(rawFile.size),
       uploadedAt: dayjs().format('YYYY-MM-DD HH:mm:ss'),
       rawFile,
-      objectUrl: extension === 'pdf' ? URL.createObjectURL(rawFile) : '',
+      // 为 PDF 与 DOCX 创建 blob URL，便于预览页通过路由加载
+      objectUrl: ['pdf', 'docx'].includes(extension) ? URL.createObjectURL(rawFile) : '',
     }
     fileList.value.unshift(record)
     $message.success('文件已添加，点击预览即可查看')
