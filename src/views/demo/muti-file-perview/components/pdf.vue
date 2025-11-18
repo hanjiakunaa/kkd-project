@@ -56,7 +56,7 @@
           <div class="toolbar-divider" />
           <n-button size="small" quaternary :focusable="false" @click="handleClose">
             <template #icon>
-              <h-icon name="md-close" />
+              <h-icon name="fa-compress" />
             </template>
           </n-button>
         </div>
@@ -151,14 +151,10 @@
 </template>
 
 <script setup>
-import { addIcons } from 'oh-vue-icons'
-import { BiCardList, BiDownload, BiLayoutTextSidebarReverse, FaImages, LaSearchMinusSolid, LaSearchPlusSolid, MdClose } from 'oh-vue-icons/icons'
 import * as pdfjsLib from 'pdfjs-dist'
 import { TextLayerBuilder } from 'pdfjs-dist/web/pdf_viewer'
 import { onBeforeUnmount } from 'vue'
 import 'pdfjs-dist/web/pdf_viewer.css'
-
-addIcons(BiLayoutTextSidebarReverse, BiDownload, FaImages, BiCardList, LaSearchMinusSolid, MdClose, LaSearchPlusSolid)
 
 // 使用与项目依赖一致的 pdf.js 版本（2.9.359）
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@2.9.359/build/pdf.worker.min.js'

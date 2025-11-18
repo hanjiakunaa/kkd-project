@@ -1,7 +1,10 @@
 import { addIcons, OhVueIcon } from 'oh-vue-icons'
 import {
+  BiCardList,
   BiClipboard2Data,
   BiCodeSlash,
+  BiDownload,
+  BiLayoutTextSidebarReverse,
   FaBookmark, // 书签
   FaCompress, // 退出全屏
   FaExchangeAlt, // 切换
@@ -9,6 +12,7 @@ import {
   FaExternalLinkAlt, // 外链
   FaFlask, // 实验/演示
   FaHome, // 首页
+  FaImages,
   FaList, // 列表/资源
   FaMinus, // 减少
   FaPalette, // 调色板
@@ -22,6 +26,9 @@ import {
   FaUser, // 用户/个人
   FaUsers, // 角色/多用户
   FcHome, // 首页
+  LaSearchMinusSolid,
+  LaSearchPlusSolid,
+  MdClose,
   MdMorevert,
   PiGastly, // logo
   PrCloudUpload, // 云上传
@@ -58,13 +65,20 @@ addIcons(
   PrCloudUpload,
   ViFileTypeVscode,
   MdMorevert,
+  MdClose,
   BiCodeSlash,
+  BiDownload,
+  BiCardList,
+  BiLayoutTextSidebarReverse,
   PxPixelarticons,
   ViFileTypeAppsemble,
   ViFileTypeWord, // word icon
   ViFileTypePdf2, // prd
   ViFileTypeExcel, // excel
   BiClipboard2Data,
+  LaSearchMinusSolid,
+  LaSearchPlusSolid,
+  FaImages,
 )
 
 export const conponentIconPlugins = {
