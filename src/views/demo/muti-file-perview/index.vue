@@ -140,12 +140,10 @@ function formatBytes(bytes) {
 
 function handlePreview(row) {
   currentFile.value = row
-  // 对文件对象进行浅拷贝，避免循环引用
-  const fileForRoute = { ...row, rawFile: null } // 移除 rawFile（避免序列化问题）
   router.push({
     path: previewComponentMap[getExtension(row.name)],
     query: {
-      file: JSON.stringify(fileForRoute),
+      file: JSON.stringify(row),
     },
   })
 }
@@ -216,11 +214,10 @@ function onBeforeUpload({ file }) {
   return true
 }
 
+// 说明：为保证路由到预览页后 blob URL 仍然可用，
+// 这里不在卸载时统一 revoke。由具体预览页在关闭时释放资源。
 onBeforeUnmount(() => {
-  fileList.value.forEach((item) => {
-    if (item.objectUrl)
-      URL.revokeObjectURL(item.objectUrl)
-  })
+  // 保留 objectUrl，避免进入预览页后地址被 revoke 导致无法加载
 })
 </script>
 
