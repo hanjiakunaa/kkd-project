@@ -104,7 +104,7 @@ export function getFileMeta(targetPath) {
   const normalizedPath = normalizeSrcPath(targetPath)
 
   if (!normalizedPath) {
-    console.warn(`[getFileRawCode] 仅支持读取 /src/views 目录下的文件: ${targetPath}`)
+    // console.warn(`[getFileRawCode] 仅支持读取 /src/views 目录下的文件: ${targetPath}`)
     return null
   }
 
@@ -116,7 +116,7 @@ export async function getFileRawCode(targetPath, normalizedPath) {
   const resolvedPath = normalizedPath || normalizeSrcPath(targetPath)
 
   if (!resolvedPath) {
-    console.warn(`[getFileRawCode] 仅支持读取 /src/views 目录下的文件: ${targetPath}`)
+    // console.warn(`[getFileRawCode] 仅支持读取 /src/views 目录下的文件: ${targetPath}`)
     return null
   }
 

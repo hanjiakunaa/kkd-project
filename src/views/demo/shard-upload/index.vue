@@ -80,7 +80,7 @@
 import { NButton, NDivider, NInputNumber, NProgress, NSpace, NTag, NUpload } from 'naive-ui'
 import { uploadChunk as apiUploadChunk, checkFile, clearMockData, mergeChunk } from '@/api/shard-upload'
 import { MeCrud } from '@/components'
-import { ConcurrencyLimiter } from '@/hooks/useLimiter'
+import { ConcurrencyLimiter } from '@/composables/useLimiter'
 
 // 配置参数
 const DEFAULT_CHUNK_SIZE_MB = 1 // 默认切片大小1MB
@@ -465,7 +465,7 @@ async function prepareAndStartFileTask(file) {
 function createChunksAndHashInWorker(file, chunkSize, fileId) {
   return new Promise((resolve, reject) => {
     // 这里设置 type 因为 useHashWorker.js 文件 使用 es6 import 用设置 type 为 module
-    const worker = new Worker(new URL('@/hooks/useHashWorker.js', import.meta.url), { type: 'module' })
+    const worker = new Worker(new URL('@/composables/useHashWorker.js', import.meta.url), { type: 'module' })
 
     worker.postMessage({ file, chunkSize })
 

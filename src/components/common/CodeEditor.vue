@@ -79,7 +79,7 @@ import { oneDark } from '@codemirror/theme-one-dark'
 import { basicSetup } from 'codemirror'
 import { computed, onMounted, ref, shallowRef, watch } from 'vue'
 import { Codemirror } from 'vue-codemirror'
-import { isDark, toggleDark } from '@/hooks/useToggleDark.js'
+import { isDark, toggleDark } from '@/composables/useToggleDark.js'
 
 const props = defineProps({
   modelValue: {

@@ -25,7 +25,7 @@
 <script setup>
 import { MeModal } from '@/components'
 import { useModal } from '@/composables'
-import { getFileMeta, getFileRawCode } from '@/hooks/useGitFileCode'
+import { getFileMeta, getFileRawCode } from '@/composables/useGitFileCode'
 
 const triggerClass = ['f-c-c', 'rounded-full', 'bg-primary', 'shadow-lg', 'p-8', 'cursor-pointer']
 const [viewCodeModalRef] = useModal()

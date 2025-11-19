@@ -1,5 +1,5 @@
 <template>
-  <n-float-button position="fixed" right="20" top="90%" type="primary" menu-trigger="click">
+  <n-float-button position="fixed" right="20" top="90%" type="primary" menu-trigger="hover">
     <h-icon name="hi-solid-view-list" class="text-20 text-white" />
     <template #menu>
       <n-float-button shape="square" type="primary">
@@ -30,4 +30,7 @@ const hideLayoutTools = computed(() => {
 </script>
 
 <style scoped>
+.n-float-button :deep(.n-float-button__body) {
+  padding: 0 !important;
+}
 </style>
