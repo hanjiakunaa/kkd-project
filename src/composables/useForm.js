@@ -15,3 +15,17 @@ export function useForm(initFormData = {}) {
   }
   return [formRef, formModel, validation, rules]
 }
+
+export function useNaiveForm() {
+  const formRef = ref(null)
+
+  async function validate() {
+    await formRef.value?.validate()
+  }
+
+  async function restoreValidation() {
+    formRef.value?.restoreValidation()
+  }
+
+  return [formRef, validate, restoreValidation]
+}
