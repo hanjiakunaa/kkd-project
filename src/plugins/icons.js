@@ -5,6 +5,7 @@ import {
   BiCodeSlash,
   BiDownload,
   BiLayoutTextSidebarReverse,
+  BiPostage,
   FaBookmark, // 书签
   FaCompress, // 退出全屏
   FaExchangeAlt, // 切换
@@ -26,6 +27,8 @@ import {
   FaUser, // 用户/个人
   FaUsers, // 角色/多用户
   FcHome, // 首页
+  FcSearch,
+  HiSolidViewList,
   LaSearchMinusSolid,
   LaSearchPlusSolid,
   MdClose,
@@ -38,6 +41,7 @@ import {
   ViFileTypePdf2, // prd
   ViFileTypeVscode,
   ViFileTypeWord, // word icon
+
 } from 'oh-vue-icons/icons'
 
 addIcons(
@@ -79,6 +83,9 @@ addIcons(
   LaSearchMinusSolid,
   LaSearchPlusSolid,
   FaImages,
+  BiPostage,
+  FcSearch,
+  HiSolidViewList,
 )
 
 export const conponentIconPlugins = {

@@ -1,5 +1,3 @@
-// import api from '@/api'
-
 // 前端写死的用户信息
 export async function getUserInfo() {
   return {
@@ -108,6 +106,18 @@ export async function getPermissions() {
           show: true,
           useCache: true,
         },
+        {
+          id: 25,
+          code: 'base-top-search',
+          name: '头部搜索',
+          type: 'MENU',
+          path: '/base/top-search',
+          component: '/src/views/base/top-search.vue',
+          icon: 'fc-search',
+          order: 5,
+          enable: true,
+          show: true,
+        },
       ],
     },
     {
@@ -215,6 +225,18 @@ export async function getPermissions() {
           component: '/src/views/demo/muti-file-perview/index.vue',
           icon: 'vi-file-type-appsemble',
           order: 5,
+          enable: true,
+          show: true,
+        },
+        {
+          id: 46,
+          code: 'demo-automatic-annotation',
+          name: '自动标注',
+          type: 'MENU',
+          path: '/demo/automatic-annotation',
+          component: '/src/views/demo/automatic-annotation/index.vue',
+          icon: 'bi-postage',
+          order: 6,
           enable: true,
           show: true,
         },

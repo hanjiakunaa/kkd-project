@@ -11,7 +11,7 @@
         <div class="h-150 f-c-c flex-col">
           <i class="i-mdi:upload mb-12 text-68 color-primary" />
           <n-text class="text-14 color-gray">
-            点击或拖拽文件到此处上传（支持 PDF / Word / Excel / Markdown / TXT）
+            点击或拖拽文件到此处上传（支持 PDF / Word / Excel 文件）
           </n-text>
         </div>
       </n-upload-dragger>

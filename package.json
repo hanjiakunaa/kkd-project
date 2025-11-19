@@ -28,6 +28,7 @@
     "dayjs": "^1.11.13",
     "docx-preview": "^0.3.7",
     "echarts": "^6.0.0",
+    "fabric": "^6.9.0",
     "jinrishici": "^1.0.6",
     "jszip": "^3.10.1",
     "lodash-es": "^4.17.21",

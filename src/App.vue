@@ -18,14 +18,7 @@
           </transition>
         </component>
 
-        <layout-setting
-          v-if="layoutSettingVisible && !hideLayoutTools"
-          class="fixed right-12 top-1/2 z-999"
-        />
-        <layout-view-source-code
-          v-if="layoutViewSourceCodeVisible && !hideLayoutTools"
-          class="fixed right-12 top-1/2.3 z-999"
-        />
+        <layout-float-menu />
       </router-view>
     </n-notification-provider>
   </n-config-provider>
@@ -33,9 +26,8 @@
 
 <script setup>
 import { darkTheme, dateZhCN, zhCN } from 'naive-ui'
-import { LayoutSetting, LayoutViewSourceCode } from '@/components'
+import { LayoutFloatMenu } from '@/components'
 import { useAppStore, useTabStore } from '@/store'
-import { layoutSettingVisible, layoutViewSourceCodeVisible } from './settings'
 
 const layouts = new Map()
 function getLayout(name) {
@@ -60,13 +52,6 @@ const Layout = computed(() => {
 })
 
 const tabStore = useTabStore()
-
-// 判断是否隐藏布局工具
-const hideLayoutTools = computed(() => {
-  if (!route.name)
-    return route.path === '/login'
-  return route.name === 'Login'
-})
 
 watchEffect(() => {
   appStore.setThemeColor(appStore.primaryColor, appStore.isDark)

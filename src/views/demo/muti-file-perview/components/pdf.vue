@@ -700,12 +700,12 @@ watch(
     border-color 0.15s ease;
 }
 .outline-item:hover {
-  background: #eaf1ff;
-  border-left-color: #93c5fd;
+  background: rgba(var(--primary-color), 0.08);
+  border-left-color: var(--primary-color);
 }
 .outline-item.active {
-  background: #e0ecff;
-  border-left-color: #3b82f6;
+  background: rgba(var(--primary-color), 0.15);
+  border-left-color: var(--primary-color);
 }
 .outline-empty {
   display: flex;
@@ -740,12 +740,12 @@ watch(
   transition: all 0.15s ease;
 }
 .thumb-item:hover {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 2px 8px rgba(var(--primary-color), 0.15);
   transform: translateY(-1px);
 }
 .thumb-item.active {
-  border-color: #93c5fd;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(var(--primary-color), 0.2);
 }
 .thumb-canvas-wrap {
   position: relative;
