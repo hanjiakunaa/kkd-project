@@ -38,7 +38,6 @@ async function viewSource(targetFile) {
   const meta = getFileMeta(targetFile)
 
   if (!meta) {
-    console.warn(`[CodeEditorDemo] 未能解析文件: ${targetFile}`)
     return
   }
 

@@ -286,7 +286,9 @@
 
 <script setup>
 import {
+  nextTick,
   onBeforeUnmount,
+  onMounted,
 } from 'vue'
 import { MeModal } from '@/components'
 import {
@@ -475,11 +477,13 @@ function handleGlobalMouseUp() {
 window.addEventListener('mouseup', handleGlobalMouseUp)
 
 function updateLayoutMetrics() {
-  if (!layoutRef.value) {
+  if (!layoutRef.value || !(layoutRef.value instanceof HTMLElement)) {
     return
   }
   const toolbarHeight = toolbarRef.value?.offsetHeight ?? 0
-  layoutRef.value.style.setProperty('--toolbar-height', `${toolbarHeight}px`)
+  if (layoutRef.value.style) {
+    layoutRef.value.style.setProperty('--toolbar-height', `${toolbarHeight}px`)
+  }
 }
 
 function openExportModal() {
@@ -618,7 +622,9 @@ watch(
 )
 
 onMounted(() => {
-  updateLayoutMetrics()
+  nextTick(() => {
+    updateLayoutMetrics()
+  })
   window.addEventListener('resize', updateLayoutMetrics)
 })
 
