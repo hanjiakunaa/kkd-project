@@ -78,8 +78,11 @@
           <n-button type="tertiary" size="small" secondary strong @click="clearCanvas">
             清空
           </n-button>
-          <n-button type="success" size="small" strong quaternary @click="openExportModal">
+          <n-button type="primary" size="small" strong quaternary @click="openExportModal">
             导出图片
+          </n-button>
+          <n-button type="success" size="small" strong quaternary @click="openGifModal">
+            导出GIF
           </n-button>
         </div>
       </header>
@@ -112,6 +115,7 @@
       </div>
     </div>
 
+    <!-- PNG 导出弹窗 -->
     <me-modal
       ref="exportModalRef"
       title="导出为图片"
@@ -148,6 +152,26 @@
               锁定宽高比（1:1）
             </n-checkbox>
           </n-form-item>
+          <n-form-item label="背景设置">
+            <n-radio-group v-model:value="exportOptions.backgroundType">
+              <n-space>
+                <n-radio value="transparent">
+                  透明背景
+                </n-radio>
+                <n-radio value="color">
+                  自定义颜色
+                </n-radio>
+              </n-space>
+            </n-radio-group>
+          </n-form-item>
+
+          <n-form-item v-if="exportOptions.backgroundType === 'color'" label="背景颜色">
+            <n-color-picker
+              v-model:value="exportOptions.backgroundColor"
+              :modes="['hex']"
+              :show-alpha="false"
+            />
+          </n-form-item>
         </n-form>
         <div class="export-modal__actions">
           <n-button tertiary @click="closeExportModal">
@@ -159,44 +183,127 @@
         </div>
       </div>
     </me-modal>
+
+    <!-- GIF 导出弹窗 -->
+    <me-modal
+      ref="gifModalRef"
+      title="导出为 GIF 动画"
+      width="480px"
+      :show-footer="false"
+    >
+      <div class="export-modal">
+        <n-form label-placement="top" :show-feedback="false">
+          <n-form-item label="动画效果">
+            <n-select
+              v-model:value="gifOptions.animationType"
+              :options="animationTypeOptions"
+              placeholder="选择动画效果"
+            />
+          </n-form-item>
+          <n-form-item label="输出宽度（px）">
+            <n-input-number
+              v-model:value="gifOptions.width"
+              :min="DEFAULT_COLS"
+              :max="1024"
+              :step="32"
+              placeholder="输出宽度"
+              class="w-full"
+            />
+          </n-form-item>
+          <n-form-item label="输出高度（px）">
+            <n-input-number
+              v-model:value="gifOptions.height"
+              :min="DEFAULT_ROWS"
+              :max="1024"
+              :step="32"
+              :disabled="gifOptions.lockRatio"
+              placeholder="输出高度"
+              class="w-full"
+            />
+          </n-form-item>
+          <n-form-item>
+            <n-checkbox v-model:checked="gifOptions.lockRatio">
+              锁定宽高比（1:1）
+            </n-checkbox>
+          </n-form-item>
+          <n-form-item label="背景设置">
+            <n-radio-group v-model:value="gifOptions.backgroundType">
+              <n-space>
+                <n-radio value="transparent">
+                  透明背景
+                </n-radio>
+                <n-radio value="color">
+                  自定义颜色
+                </n-radio>
+              </n-space>
+            </n-radio-group>
+          </n-form-item>
+
+          <n-form-item v-if="gifOptions.backgroundType === 'color'" label="背景颜色">
+            <n-color-picker
+              v-model:value="gifOptions.backgroundColor"
+              :modes="['hex']"
+              :show-alpha="false"
+            />
+          </n-form-item>
+          <n-form-item label="帧延迟（毫秒）">
+            <n-slider
+              v-model:value="gifOptions.frameDelay"
+              :min="50"
+              :max="1000"
+              :step="50"
+              :marks="{ 50: '50ms', 500: '500ms', 1000: '1000ms' }"
+            />
+          </n-form-item>
+          <n-form-item label="动画质量">
+            <n-slider
+              v-model:value="gifOptions.quality"
+              :min="1"
+              :max="20"
+              :step="1"
+              :marks="{ 1: '最佳', 10: '平衡', 20: '最快' }"
+            />
+          </n-form-item>
+        </n-form>
+
+        <div class="export-modal__actions">
+          <n-button tertiary :disabled="gifProgress.isGenerating" @click="closeGifModal">
+            取消
+          </n-button>
+          <n-button
+            type="success"
+            :loading="gifProgress.isGenerating"
+            :disabled="gifProgress.isGenerating"
+            @click="handleGifExportConfirm"
+          >
+            生成 GIF
+          </n-button>
+        </div>
+      </div>
+    </me-modal>
   </common-page>
 </template>
 
 <script setup>
 import {
-  computed,
   onBeforeUnmount,
-  onMounted,
-  reactive,
-  ref,
-  watch,
 } from 'vue'
 import { MeModal } from '@/components'
-import { useModal } from '@/composables'
-
-const DEFAULT_ROWS = 32
-const DEFAULT_COLS = 32
-const EMPTY_COLOR = '#ffffff'
-const BASE_PIXEL_SIZE = 20
-
-function createPixelGrid(rows, cols, fill = EMPTY_COLOR) {
-  return Array.from({ length: rows }, () =>
-    Array.from({ length: cols }, () => fill))
-}
+import {
+  ANIMATION_TYPE_OPTIONS,
+  BASE_PIXEL_SIZE,
+  createPixelGrid,
+  DEFAULT_COLS,
+  DEFAULT_ROWS,
+  EMPTY_COLOR,
+  exportGif,
+  exportImage,
+  PALETTE_COLORS,
+  useModal,
+} from '@/composables'
 
 const pixels = ref(createPixelGrid(DEFAULT_ROWS, DEFAULT_COLS))
-const paletteColors = [
-  '#161D3F', // 深海蓝
-  '#F1E4D3', // 奶油米
-  '#FF8A65', // 珊瑚橙
-  '#FFD369', // 柔光黄
-  '#69C9BA', // 薄荷青
-  '#4F83FF', // 湖水蓝
-  '#9A6BFF', // 薰衣紫
-  '#FF7BB2', // 樱花粉
-  '#CB9B6F', // 焦糖棕
-  '#6B7A8F', // 雾霾灰蓝
-]
+const paletteColors = PALETTE_COLORS
 const selectedColor = ref('#ff7f50')
 const currentTool = ref('brush')
 const isDrawing = ref(false)
@@ -208,11 +315,33 @@ const layoutRef = ref(null)
 const lastTouchPixel = ref({ row: null, col: null })
 
 const [exportModalRef] = useModal()
+const [gifModalRef] = useModal()
+
 const exportOptions = reactive({
   width: 512,
   height: 512,
   lockRatio: true,
+  backgroundType: 'color', // 'transparent' 或 'color'
+  backgroundColor: '#ffffff', // 默认白色
 })
+
+const gifOptions = reactive({
+  animationType: 'blink',
+  width: 512,
+  height: 512,
+  lockRatio: true,
+  frameDelay: 200,
+  quality: 10,
+  backgroundType: 'color', // 'transparent' 或 'color'
+  backgroundColor: '#ffffff', // 默认白色
+})
+
+const gifProgress = reactive({
+  isGenerating: false,
+  message: '',
+})
+
+const animationTypeOptions = ANIMATION_TYPE_OPTIONS
 
 const canvasStyle = computed(() => ({
   '--cols': DEFAULT_COLS,
@@ -259,38 +388,6 @@ function handlePixelMouseDown(rowIndex, colIndex) {
 
 function clearCanvas() {
   pixels.value = createPixelGrid(DEFAULT_ROWS, DEFAULT_COLS)
-}
-
-function exportImage(targetWidth = DEFAULT_COLS, targetHeight = DEFAULT_ROWS) {
-  const canvas = document.createElement('canvas')
-  const ctx = canvas.getContext('2d')
-
-  const exportWidth
-    = Number.isFinite(targetWidth) && targetWidth > 0
-      ? targetWidth
-      : DEFAULT_COLS
-  const exportHeight
-    = Number.isFinite(targetHeight) && targetHeight > 0
-      ? targetHeight
-      : DEFAULT_ROWS
-
-  canvas.width = exportWidth
-  canvas.height = exportHeight
-
-  const scaleX = exportWidth / DEFAULT_COLS
-  const scaleY = exportHeight / DEFAULT_ROWS
-
-  pixels.value.forEach((row, rowIndex) => {
-    row.forEach((color, colIndex) => {
-      ctx.fillStyle = color
-      ctx.fillRect(colIndex * scaleX, rowIndex * scaleY, scaleX, scaleY)
-    })
-  })
-
-  const link = document.createElement('a')
-  link.download = `pixel-drawing-${Date.now()}.png`
-  link.href = canvas.toDataURL('image/png')
-  link.click()
 }
 
 function handlePaletteSelect(color) {
@@ -385,16 +482,6 @@ function updateLayoutMetrics() {
   layoutRef.value.style.setProperty('--toolbar-height', `${toolbarHeight}px`)
 }
 
-onMounted(() => {
-  updateLayoutMetrics()
-  window.addEventListener('resize', updateLayoutMetrics)
-})
-
-onBeforeUnmount(() => {
-  window.removeEventListener('mouseup', handleGlobalMouseUp)
-  window.removeEventListener('resize', updateLayoutMetrics)
-})
-
 function openExportModal() {
   if (
     !Number.isFinite(exportOptions.width)
@@ -423,14 +510,75 @@ function closeExportModal() {
 }
 
 function handleExportConfirm() {
-  const width = Math.round(
-    Math.max(DEFAULT_COLS, exportOptions.width || DEFAULT_COLS),
-  )
+  const width = Math.round(Math.max(DEFAULT_COLS, exportOptions.width || DEFAULT_COLS))
   const height = exportOptions.lockRatio
     ? width
     : Math.round(Math.max(DEFAULT_ROWS, exportOptions.height || DEFAULT_ROWS))
-  exportImage(width, height)
+
+  exportImage(
+    pixels.value,
+    width,
+    height,
+    exportOptions.backgroundType,
+    exportOptions.backgroundColor,
+  )
   closeExportModal()
+}
+
+function openGifModal() {
+  if (!Number.isFinite(gifOptions.width) || gifOptions.width < DEFAULT_COLS) {
+    gifOptions.width = 512
+  }
+  if (gifOptions.lockRatio) {
+    gifOptions.height = gifOptions.width
+  }
+
+  gifModalRef.value?.open({
+    title: '导出为 GIF 动画',
+    width: '480px',
+    showFooter: false,
+  })
+}
+
+function closeGifModal() {
+  gifModalRef.value?.close()
+}
+
+async function handleGifExportConfirm() {
+  gifProgress.isGenerating = true
+  gifProgress.message = '正在初始化...'
+
+  try {
+    const width = Math.round(Math.max(DEFAULT_COLS, gifOptions.width || 512))
+    const height = gifOptions.lockRatio
+      ? width
+      : Math.round(Math.max(DEFAULT_ROWS, gifOptions.height || 512))
+
+    await exportGif(
+      pixels.value,
+      {
+        animationType: gifOptions.animationType,
+        width,
+        height,
+        frameDelay: gifOptions.frameDelay,
+        quality: gifOptions.quality,
+        backgroundType: gifOptions.backgroundType,
+        backgroundColor: gifOptions.backgroundColor,
+      },
+      (message) => {
+        gifProgress.message = message
+      },
+    )
+
+    gifProgress.isGenerating = false
+    gifProgress.message = ''
+    closeGifModal()
+  }
+  catch (error) {
+    console.error('生成 GIF 失败:', error)
+    gifProgress.isGenerating = false
+    gifProgress.message = ''
+  }
 }
 
 watch(
@@ -450,6 +598,34 @@ watch(
     }
   },
 )
+
+watch(
+  () => gifOptions.lockRatio,
+  (locked) => {
+    if (locked) {
+      gifOptions.height = gifOptions.width
+    }
+  },
+)
+
+watch(
+  () => gifOptions.width,
+  (value) => {
+    if (gifOptions.lockRatio) {
+      gifOptions.height = value
+    }
+  },
+)
+
+onMounted(() => {
+  updateLayoutMetrics()
+  window.addEventListener('resize', updateLayoutMetrics)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('mouseup', handleGlobalMouseUp)
+  window.removeEventListener('resize', updateLayoutMetrics)
+})
 </script>
 
 <style scoped>

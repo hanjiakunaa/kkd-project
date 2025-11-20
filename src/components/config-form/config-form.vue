@@ -111,6 +111,14 @@ const computedLabelWidth = computed(() => {
   return 120
 })
 
+// 获取字段的标签宽度，优先使用字段 props 中的 labelWidth
+function getFieldLabelWidth(field) {
+  if (field?.props?.labelWidth !== undefined) {
+    return field.props.labelWidth
+  }
+  return computedLabelWidth.value
+}
+
 function returnResponsiveSpan(span) {
   if (isMobile().value) {
     return 24
@@ -143,6 +151,7 @@ defineExpose({
         :span="returnResponsiveSpan(field.span)"
         :label="field.label"
         :path="field.key"
+        :label-width="getFieldLabelWidth(field)"
       >
         <config-form-item v-model:value="model[field.key]" :field="field" :model="model">
           <template v-for="name of Object.keys(slots)" #[name]="slotProps">

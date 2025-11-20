@@ -14,19 +14,13 @@
       :columns="columns"
       :get-data="api.read"
     >
-      <me-query-item label="角色名" :label-width="50">
-        <n-input v-model:value="queryItems.name" type="text" placeholder="请输入角色名" clearable />
-      </me-query-item>
-      <me-query-item label="状态" :label-width="50">
-        <n-select
-          v-model:value="queryItems.enable"
-          clearable
-          :options="[
-            { label: '启用', value: 1 },
-            { label: '停用', value: 0 },
-          ]"
-        />
-      </me-query-item>
+      <common-top-search
+        v-model:model="queryItems"
+        :fields="searchFields"
+        :label-width="50"
+        @search="searchForm"
+        @reset="resetForm"
+      />
     </me-crud>
     <me-modal ref="modalRef" width="520px">
       <n-form
@@ -209,4 +203,45 @@ async function handleEnable(row) {
 
 const permissionTree = ref([])
 api.getAllPermissionTree().then(({ data = [] }) => (permissionTree.value = data))
+
+// 搜索字段配置
+const searchFields = computed(() => [
+  {
+    key: 'name',
+    label: '角色名',
+    type: 'input',
+    placeholder: '支持模糊查询',
+    props: {
+      labelWidth: 80,
+    },
+  },
+
+  {
+    key: 'enable',
+    label: '状态',
+    type: 'select',
+    options: [
+      {
+        label: '启用',
+        value: 1,
+      },
+      {
+        label: '停用',
+        value: 0,
+      },
+    ],
+  },
+])
+
+// 搜索表单提交
+function searchForm() {
+  // 触发表格搜索
+  $table.value?.handleSearch()
+}
+
+// 重置表单
+function resetForm() {
+  // 触发表格搜索
+  $table.value?.handleReset()
+}
 </script>

@@ -62,6 +62,9 @@ export default defineConfig(({ mode }) => {
         },
       },
     },
+    optimizeDeps: {
+      exclude: ['mammoth'], // 排除 mammoth，避免预构建错误
+    },
     build: {
       chunkSizeWarningLimit: 1024, // chunk 大小警告的限制（单位kb）
     },

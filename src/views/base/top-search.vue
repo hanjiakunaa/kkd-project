@@ -1,17 +1,27 @@
 <template>
   <common-page title="头部搜索">
-    <common-top-search
-      v-model:model="model"
-      :fields="searchFields"
-      @search="searchForm"
-      @reset="resetForm"
-    />
+    <n-card title="头部搜索" embedded :bordered="false">
+      <common-top-search
+        v-model:model="model"
+        :fields="searchFields"
+        :label-width="50"
+        @search="searchForm"
+        @reset="resetForm"
+      />
+    </n-card>
+
+    <n-space vertical :size="16">
+      <code-editor
+        :model-value="JSON.stringify(model, null, 2)"
+        language="json"
+        placeholder="尝试编辑model..."
+        :show-toolbar="false"
+      />
+    </n-space>
   </common-page>
 </template>
 
 <script setup>
-import { CommonTopSearch } from '@/components'
-
 const departmentOptions = ref([
   {
     label: '部门1',
@@ -62,12 +72,16 @@ const searchFields = computed(() => [
     placeholder: '请选择所属部门',
     props: {
       expandAll: true,
+      labelWidth: 80,
     },
   },
   {
     key: 'createTimeRange',
     label: '创建时间',
     type: 'datetimerange',
+    props: {
+      labelWidth: 80,
+    },
   },
 
   {
@@ -83,7 +97,22 @@ const searchFields = computed(() => [
   },
 ])
 
-const model = ref({})
+// 初始化 model，包含所有字段
+function initModel() {
+  const initialModel = {}
+  searchFields.value.forEach((field) => {
+    const fieldType = field.type?.toLowerCase() || ''
+    if (fieldType === 'input' || fieldType === 'inputnumber') {
+      initialModel[field.key] = ''
+    }
+    else {
+      initialModel[field.key] = null
+    }
+  })
+  return initialModel
+}
+
+const model = ref(initModel())
 
 function searchForm() {
   // 在这里执行搜索逻辑
@@ -92,11 +121,14 @@ function searchForm() {
 }
 
 function resetForm() {
-  // 重置表单数据
-  model.value = {}
+  // 重置表单数据（字段值已在 commonTopSearch 组件中清除）
+  // 这里可以执行额外的重置逻辑，比如清除其他状态
   console.warn('重置表单')
 }
 </script>
 
 <style scoped>
+.n-card {
+  border-radius: 12px;
+}
 </style>

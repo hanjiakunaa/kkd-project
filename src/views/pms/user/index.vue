@@ -9,34 +9,18 @@
 
     <me-crud
       ref="$table"
-      v-model:query-items="queryItems"
+      v-model:query-items="searchModel"
       :scroll-x="1200"
       :columns="columns"
       :get-data="api.read"
     >
-      <me-query-item label="用户名" :label-width="50">
-        <n-input
-          v-model:value="queryItems.username"
-          type="text"
-          placeholder="请输入用户名"
-          clearable
-        />
-      </me-query-item>
-
-      <me-query-item label="性别" :label-width="50">
-        <n-select v-model:value="queryItems.gender" clearable :options="genders" />
-      </me-query-item>
-
-      <me-query-item label="状态" :label-width="50">
-        <n-select
-          v-model:value="queryItems.enable"
-          clearable
-          :options="[
-            { label: '启用', value: 1 },
-            { label: '停用', value: 0 },
-          ]"
-        />
-      </me-query-item>
+      <common-top-search
+        v-model:model="searchModel"
+        :fields="searchFields"
+        :label-width="80"
+        @search="searchForm"
+        @reset="resetForm"
+      />
     </me-crud>
 
     <me-modal ref="modalRef" width="520px">
@@ -103,7 +87,7 @@
 
 <script setup>
 import { NAvatar, NButton, NSwitch, NTag } from 'naive-ui'
-import { MeCrud, MeModal, MeQueryItem } from '@/components'
+import { CommonTopSearch, MeCrud, MeModal, MeQueryItem } from '@/components'
 import { useCrud } from '@/composables'
 import { withPermission } from '@/directives'
 import { formatDateTime } from '@/utils'
@@ -112,8 +96,6 @@ import api from './api'
 defineOptions({ name: 'UserMgt' })
 
 const $table = ref(null)
-/** QueryBar筛选参数（可选） */
-const queryItems = ref({})
 
 onMounted(() => {
   $table.value?.handleSearch()
@@ -313,5 +295,51 @@ function onSave() {
     })
   }
   handleSave()
+}
+
+// 搜索字段配置
+const searchFields = computed(() => [
+  {
+    key: 'username',
+    label: '用户名',
+    type: 'input',
+    placeholder: '支持模糊查询',
+  },
+  {
+    key: 'email',
+    label: '邮箱',
+    type: 'input',
+    placeholder: '支持模糊查询',
+  },
+
+  {
+    key: 'enable',
+    label: '状态',
+    type: 'select',
+    options: [
+      {
+        label: '启用',
+        value: 1,
+      },
+      {
+        label: '停用',
+        value: 0,
+      },
+    ],
+  },
+])
+
+const searchModel = ref({})
+
+// 搜索表单提交
+function searchForm() {
+  // 触发表格搜索
+  $table.value?.handleSearch()
+}
+
+// 重置表单
+function resetForm() {
+  // 触发表格搜索
+  $table.value?.handleReset()
 }
 </script>

@@ -137,7 +137,7 @@ const props = defineProps({
   },
   disabled: {
     type: Boolean,
-    default: false,
+    default: true,
   },
   indentWithTab: {
     type: Boolean,
