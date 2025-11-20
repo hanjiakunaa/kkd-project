@@ -118,6 +118,7 @@ export async function getPermissions() {
           enable: true,
           show: true,
         },
+
       ],
     },
     {
