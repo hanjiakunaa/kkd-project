@@ -29,6 +29,7 @@ import {
   FcHome, // 首页
   FcSearch,
   HiSolidViewList,
+  LaBlogger,
   LaSearchMinusSolid,
   LaSearchPlusSolid,
   MdClose,
@@ -41,7 +42,6 @@ import {
   ViFileTypePdf2, // prd
   ViFileTypeVscode,
   ViFileTypeWord, // word icon
-
 } from 'oh-vue-icons/icons'
 
 addIcons(
@@ -86,6 +86,8 @@ addIcons(
   BiPostage,
   FcSearch,
   HiSolidViewList,
+  LaBlogger,
+
 )
 
 export const conponentIconPlugins = {

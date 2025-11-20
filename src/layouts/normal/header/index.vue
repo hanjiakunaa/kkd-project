@@ -7,6 +7,22 @@
     <span class="mx-6 opacity-20">|</span>
 
     <div class="flex flex-shrink-0 items-center px-12 text-18">
+      <n-tooltip trigger="hover">
+        <template #trigger>
+          <a
+            href="https://kk-blog-qqkk.vercel.app/"
+            target="_blank"
+            class="mr-16 inline-flex cursor-pointer items-center"
+          >
+            <h-icon
+              name="la-blogger"
+              scale="1.2"
+            />
+          </a>
+        </template>
+        我的博客
+      </n-tooltip>
+
       <beginner-guide />
 
       <toggle-theme />
