@@ -7,6 +7,6 @@ import { isDark, toggleDark } from '@/composables/useToggleDark.js'
     id="toggleTheme"
     class="mr-16 cursor-pointer"
     :class="isDark ? 'i-fe:moon' : 'i-fe:sun'"
-    @click="toggleDark"
+    @click="(e) => toggleDark({ clientX: e.clientX || window.innerWidth / 2, clientY: e.clientY || window.innerHeight / 2 })"
   />
 </template>
