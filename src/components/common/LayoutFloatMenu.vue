@@ -25,7 +25,7 @@
 
 <script setup>
 import { LayoutSetting, LayoutViewSourceCode } from '@/components'
-import { layoutSettingVisible, layoutViewSourceCodeVisible } from '@/settings'
+import { disabledRoutes, layoutSettingVisible, layoutViewSourceCodeVisible } from '@/settings'
 import { lStorage } from '@/utils/storage'
 
 const route = useRoute()
@@ -121,16 +121,13 @@ function handleResize() {
   savePosition()
 }
 
-// 需要隐藏布局工具的页面列表（可以是路径或路由名称）
-const hiddenPages = ['/', '/404', '/403', '/login', '/demo/muti-file-perview/pdf-preview', '/demo/muti-file-perview/word-preview', '/demo/muti-file-perview/excel-preview']
-
 // 判断是否隐藏布局工具
 const hideLayoutTools = computed(() => {
   // 检查路径是否在隐藏列表中
-  if (hiddenPages.includes(route.path))
+  if (disabledRoutes.includes(route.path))
     return true
   // 检查路由名称是否在隐藏列表中
-  if (route.name && hiddenPages.includes(route.name))
+  if (route.name && disabledRoutes.includes(route.name))
     return true
   return false
 })

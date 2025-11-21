@@ -29,6 +29,7 @@ import {
   FaUsers, // 角色/多用户
   FcHome, // 首页
   FcSearch,
+  FcWorkflow,
   HiSolidViewList,
   LaBlogger,
   LaSearchMinusSolid,
@@ -89,6 +90,7 @@ addIcons(
   HiSolidViewList,
   LaBlogger,
   FaRegularKeyboard,
+  FcWorkflow,
 
 )
 

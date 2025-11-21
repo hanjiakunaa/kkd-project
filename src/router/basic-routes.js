@@ -64,4 +64,5 @@ export const basicRoutes = [
       layout: 'empty',
     },
   },
+
 ]

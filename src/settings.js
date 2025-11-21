@@ -19,3 +19,6 @@ export const naiveThemeOverrides = {
     primaryColorSuppl: '#316C72E3',
   },
 }
+
+// 禁用路由列表
+export const disabledRoutes = ['/', '/404', '/403', '/login', '/demo/muti-file-perview/pdf-preview', '/demo/muti-file-perview/word-preview', '/demo/muti-file-perview/excel-preview', '/demo/workflow']
