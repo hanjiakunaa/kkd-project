@@ -626,7 +626,7 @@ export async function exportGif(pixelData, options, progressCallback) {
 
   // 获取 worker 脚本路径（使用本地文件）
   // 注意：需要确保 public/gifjs/gif.worker.js 文件存在
-  const workerUrl = '/gifjs/gif.worker.js'
+  const workerUrl = '@/lib/gif.worker.js'
 
   // 创建 GIF 实例
   const gif = new GIF({
