@@ -17,7 +17,6 @@
             />
           </transition>
         </component>
-
         <layout-float-menu />
       </router-view>
     </n-notification-provider>
