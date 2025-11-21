@@ -18,6 +18,7 @@ import {
   FaMinus, // 减少
   FaPalette, // 调色板
   FaPlus, // 增加
+  FaRegularKeyboard,
   FaShieldAlt, // 权限管理
   FaSignOutAlt, // 退出
   FaStar, // 星标
@@ -87,6 +88,7 @@ addIcons(
   FcSearch,
   HiSolidViewList,
   LaBlogger,
+  FaRegularKeyboard,
 
 )
 

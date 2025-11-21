@@ -241,6 +241,18 @@ export async function getPermissions() {
           enable: true,
           show: true,
         },
+        {
+          id: 47,
+          code: 'demo-key-memory',
+          name: '按键记忆',
+          type: 'MENU',
+          path: '/demo/key-memory',
+          component: '/src/views/demo/key-memory/index.vue',
+          icon: 'fa-regular-keyboard',
+          order: 7,
+          enable: true,
+          show: true,
+        },
       ],
     },
     {
