@@ -45,6 +45,16 @@ import {
   ViFileTypeVscode,
   ViFileTypeWord, // word icon
 } from 'oh-vue-icons/icons'
+import {
+  RiAppsLine,
+  RiFullscreenExitLine,
+  RiGitBranchLine,
+  RiLoginCircleLine,
+  RiLogoutCircleLine,
+  RiRobotLine,
+  RiToolsLine,
+  RiFolderLine,
+} from 'oh-vue-icons/icons/ri'
 
 addIcons(
   FcHome,
@@ -91,6 +101,15 @@ addIcons(
   LaBlogger,
   FaRegularKeyboard,
   FcWorkflow,
+  // Workflow page specific icons (Remix)
+  RiLoginCircleLine,
+  RiLogoutCircleLine,
+  RiRobotLine,
+  RiToolsLine,
+  RiGitBranchLine,
+  RiAppsLine,
+  RiFullscreenExitLine,
+  RiFolderLine,
 
 )
 
