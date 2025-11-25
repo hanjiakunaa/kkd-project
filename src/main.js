@@ -1,7 +1,6 @@
 import { createApp } from 'vue'
 import App from './App.vue'
 import { setupDirectives } from './directives'
-
 import { setupGlobalComponents } from './plugins/components'
 import { conponentIconPlugins } from './plugins/icons'
 import { setupRouter } from './router'
@@ -19,7 +18,6 @@ async function bootstrap() {
   app.use(setupGlobalComponents)
   // 先注册图标组件，确保在渲染菜单前可用
   app.use(conponentIconPlugins)
-
   setupStore(app)
   setupDirectives(app)
   await setupRouter(app)

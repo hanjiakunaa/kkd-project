@@ -232,7 +232,7 @@ export async function getPermissions() {
         {
           id: 46,
           code: 'demo-automatic-annotation',
-          name: '自动标注',
+          name: '标注',
           type: 'MENU',
           path: '/demo/automatic-annotation',
           component: '/src/views/demo/automatic-annotation/index.vue',
