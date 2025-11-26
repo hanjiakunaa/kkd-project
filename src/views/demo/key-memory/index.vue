@@ -6,7 +6,7 @@
         <n-input
           v-model:value="inputValue"
           type="text"
-          placeholder="在这里输入内容，下方会显示你按下的按键..."
+          placeholder="在这里输入内容，下方会显示你按下的按键（支持中文、英文、组合键）..."
           size="large"
           clearable
         />
@@ -57,7 +57,7 @@
 </template>
 
 <script setup>
-import { onMounted, onUnmounted, ref } from 'vue'
+import { onMounted, onUnmounted, ref, watch } from 'vue'
 
 const inputValue = ref('')
 const keyHistory = ref([])
@@ -65,8 +65,10 @@ const fadeDelay = 10000 // 按键显示10秒后开始淡出
 const removeDelay = 500 // 淡出动画持续500ms
 
 let keyIdCounter = 0
-let pressedKeys = new Set() // 记录当前按下的所有键
+const pressedKeys = new Set() // 记录当前按下的所有键
 let keyComboTimeout = null
+let isComposing = false // 标记是否正在使用输入法
+let lastInputValue = '' // 记录上一次的输入值
 
 // 需要过滤的修饰键（单独按下时）
 const modifierKeys = new Set(['Control', 'Alt', 'Shift', 'Meta', 'CapsLock', 'NumLock', 'ScrollLock'])
@@ -104,13 +106,13 @@ function formatTime(timestamp) {
 }
 
 // 添加按键到历史记录
-function addKeyToHistory(keys) {
+function addKeyToHistory(keys, isChineseInput = false) {
   // 如果只有修饰键，不记录
-  if (keys.length === 1 && modifierKeys.has(keys[0]))
+  if (!isChineseInput && keys.length === 1 && modifierKeys.has(keys[0]))
     return
 
   // 组合显示按键
-  const display = keys.map(formatKeyName).join(' + ')
+  const display = isChineseInput ? keys[0] : keys.map(formatKeyName).join(' + ')
 
   const keyItem = {
     id: keyIdCounter++,
@@ -146,6 +148,10 @@ function clearKeys() {
 
 // 键盘按下事件
 function handleKeyDown(event) {
+  // 如果正在使用输入法，不处理普通按键
+  if (isComposing)
+    return
+
   const key = event.key
 
   // 添加到已按下的键集合
@@ -171,15 +177,86 @@ function handleKeyUp(event) {
   pressedKeys.delete(key)
 }
 
+// 输入法开始组合
+function handleCompositionStart() {
+  isComposing = true
+}
+
+// 输入法组合更新
+function handleCompositionUpdate() {
+  isComposing = true
+}
+
+// 输入法组合结束（中文输入完成）
+function handleCompositionEnd(event) {
+  isComposing = false
+  const data = event.data
+  if (data) {
+    // 将中文字符逐个拆分并记录
+    for (const char of data) {
+      addKeyToHistory([char], true)
+    }
+  }
+}
+
+// 监听输入框的输入事件（兼容直接粘贴等操作）
+function handleInput(event) {
+  // 如果正在使用输入法，不处理（由 compositionend 处理）
+  if (isComposing)
+    return
+
+  const newValue = event.target.value
+
+  // 检测是新增还是删除
+  if (newValue.length > lastInputValue.length) {
+    // 新增字符
+    const addedChars = newValue.slice(lastInputValue.length)
+    for (const char of addedChars) {
+      addKeyToHistory([char], true)
+    }
+  }
+
+  lastInputValue = newValue
+}
+
+// 监听输入值变化，同步 lastInputValue
+watch(inputValue, (newValue) => {
+  // 当通过清空按钮清空时，同步更新 lastInputValue
+  if (newValue === '') {
+    lastInputValue = ''
+  }
+})
+
 onMounted(() => {
   // 监听全局键盘事件
   window.addEventListener('keydown', handleKeyDown)
   window.addEventListener('keyup', handleKeyUp)
+
+  // 监听输入法相关事件
+  const inputElement = document.querySelector('.key-memory-container input')
+  if (inputElement) {
+    inputElement.addEventListener('compositionstart', handleCompositionStart)
+    inputElement.addEventListener('compositionupdate', handleCompositionUpdate)
+    inputElement.addEventListener('compositionend', handleCompositionEnd)
+    inputElement.addEventListener('input', handleInput)
+  }
+
+  lastInputValue = inputValue.value
 })
 
 onUnmounted(() => {
   window.removeEventListener('keydown', handleKeyDown)
   window.removeEventListener('keyup', handleKeyUp)
+
+  // 移除输入法事件监听
+  const inputElement = document.querySelector('.key-memory-container input')
+  if (inputElement) {
+    inputElement.removeEventListener('compositionstart', handleCompositionStart)
+    inputElement.removeEventListener('compositionupdate', handleCompositionUpdate)
+    inputElement.removeEventListener('compositionend', handleCompositionEnd)
+    inputElement.removeEventListener('input', handleInput)
+  }
+
   if (keyComboTimeout) {
     clearTimeout(keyComboTimeout)
   }

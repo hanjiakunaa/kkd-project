@@ -4,7 +4,7 @@
       <!-- 顶部操作栏 -->
       <n-card class="header-card" :bordered="false">
         <n-space :size="12">
-          <n-button type="primary" @click="toggleTableList()">
+          <n-button type="primary">
             <template #icon>
               <n-icon>
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
@@ -28,7 +28,7 @@
       </n-card>
 
       <!-- 主内容区域 -->
-      <div v-show="!showTableList" class="content-wrapper">
+      <div class="content-wrapper">
         <div class="layout-container">
           <!-- 左侧：表格名称列表区域 -->
           <n-card class="table-list-card" title="表格列表" :bordered="false" size="small">
@@ -79,59 +79,72 @@
           </n-card>
 
           <!-- 右侧：表格操作和数据区域 -->
-          <div class="table-content">
+          <div class="table-content" :class="{ 'fullscreen-mode': isFullscreen }">
             <!-- 操作按钮区域 -->
             <n-card v-if="currentTable" class="action-card" :bordered="false" size="small">
-              <n-space :size="12">
-                <n-button type="success" @click="addColumn">
+              <n-space :size="8">
+                <n-button type="success" size="small" @click="addColumn">
                   <template #icon>
-                    <n-icon>
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                        <path fill="currentColor" d="M13 7h-2v4H7v2h4v4h2v-4h4v-2h-4V7zm-1-5C6.48 2 2 6.48 2 12s4.48 10 10 10s10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8s8 3.59 8 8s-3.59 8-8 8z" />
-                      </svg>
-                    </n-icon>
+                    <i class="i-carbon-add-alt" />
                   </template>
                   添加列
                 </n-button>
                 <n-button
                   :disabled="currentTable.columnData.length === 0"
                   type="success"
+                  size="small"
                   @click="addRows"
                 >
                   <template #icon>
-                    <n-icon>
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                        <path fill="currentColor" d="M13 7h-2v4H7v2h4v4h2v-4h4v-2h-4V7zm-1-5C6.48 2 2 6.48 2 12s4.48 10 10 10s10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8s8 3.59 8 8s-3.59 8-8 8z" />
-                      </svg>
-                    </n-icon>
+                    <i class="i-carbon-add" />
                   </template>
                   添加行
                 </n-button>
                 <n-button
                   v-if="tableNameList.length > 1 && currentTableId !== tableNameList[0].id"
                   type="error"
+                  size="small"
                   @click="deleteTable(currentTable.id)"
                 >
                   <template #icon>
-                    <n-icon>
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                        <path fill="currentColor" d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" />
-                      </svg>
-                    </n-icon>
+                    <i class="i-carbon-trash-can" />
                   </template>
                   删除表格
                 </n-button>
               </n-space>
             </n-card>
 
-            <!-- 表格数据区域 -->
-            <n-card class="data-card" :bordered="false">
-              <n-data-table
-                :columns="tableColumns"
-                :data="currentTableData"
-                :row-key="row => row.index"
+            <!-- 表格区域（包含工具栏和数据） -->
+            <div class="table-wrapper">
+              <!-- 表格工具栏 -->
+              <table-toolbar
+                v-if="currentTable"
+                v-model:striped="tableStriped"
+                v-model:bordered="tableBordered"
+                v-model:size="tableSize"
+                v-model:hidden-columns="hiddenColumns"
+                :columns="allTableColumns"
+                :fullscreen="isFullscreen"
+                :show-add="true"
+                :show-delete="true"
+                :show-detail="true"
+                :show-fullscreen="false"
+                @refresh="handleRefresh"
+                @fullscreen-change="handleFullscreenChange"
               />
-            </n-card>
+
+              <!-- 表格数据区域 -->
+              <div class="data-card">
+                <n-data-table
+                  :columns="tableColumns"
+                  :data="currentTableData"
+                  :striped="tableStriped"
+                  :bordered="tableBordered"
+                  :size="tableSize"
+                  :row-key="row => row.index"
+                />
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -140,17 +153,24 @@
 </template>
 
 <script setup>
-import { NButton, NCard, NIcon, NInput, NSpace } from 'naive-ui'
-import { computed, h, nextTick, ref } from 'vue'
+import { NButton, NCard, NDataTable, NIcon, NInput, NSpace } from 'naive-ui'
+import TableToolbar from '@/components/TableToolbar/index.vue'
 
 defineOptions({ name: 'BaseDynamicTable' })
 
 const currentTableId = ref(1) // 当前选中的表格ID
 const tableIdCounter = ref(1) // 表格ID计数器
 const columnPropIndex = ref(3) // 列属性自增
-const showTableList = ref(true) // 控制表格列表显示
 const editInputRefs = ref({})
-const editingCell = ref(null) // 当前正在编辑的单元格 {rowIndex, prop}
+const editingRowIndex = ref(null) // 当前正在编辑的行索引
+const editingColumnHeader = ref(null) // 当前正在编辑的列标题 {prop}
+
+// 表格配置
+const tableStriped = ref(false) // 是否显示斑马纹
+const tableBordered = ref(true) // 是否显示边框
+const tableSize = ref('medium') // 表格大小: small | medium | large
+const hiddenColumns = ref([]) // 隐藏的列 key 数组
+const isFullscreen = ref(false) // 是否全屏
 
 // 表格列表数据，每个表格包含自己的列和数据
 const tableNameList = ref([
@@ -211,42 +231,127 @@ const currentTableData = computed(() => {
   }))
 })
 
-// 构建表格列配置
-const tableColumns = computed(() => {
+// 构建表格列配置（用于工具栏的列设置）
+const allTableColumns = computed(() => {
   const columns = [
     {
-      title: '#',
+      title: '序号',
       key: 'index',
-      width: 50,
-      render: row => row.index,
     },
   ]
 
-  // 添加动态列
+  // 添加动态列标题
   currentColumnData.value.forEach((item) => {
     columns.push({
       title: item.label,
       key: item.prop,
+    })
+  })
+
+  columns.push({
+    title: '操作',
+    key: 'actions',
+  })
+
+  return columns
+})
+
+// 构建实际渲染的表格列配置
+const tableColumns = computed(() => {
+  const columns = []
+
+  // 序号列
+  if (!hiddenColumns.value.includes('index')) {
+    columns.push({
+      title: '#',
+      key: 'index',
+      width: 50,
+      render: row => row.index,
+    })
+  }
+
+  // 添加动态列
+  currentColumnData.value.forEach((item) => {
+    // 如果列被隐藏，跳过
+    if (hiddenColumns.value.includes(item.prop)) {
+      return
+    }
+    columns.push({
+      // 使用函数形式的 title 来自定义列标题
+      title: () => {
+        const isEditingHeader = editingColumnHeader.value?.prop === item.prop
+
+        if (isEditingHeader) {
+          // 编辑状态：显示输入框
+          return h(NInput, {
+            value: item.label,
+            size: 'small',
+            ref: (el) => {
+              if (el) {
+                nextTick(() => {
+                  el?.focus?.()
+                })
+              }
+            },
+            onUpdateValue: (value) => {
+              // 更新列标题
+              const columnIndex = currentTable.value.columnData.findIndex(col => col.prop === item.prop)
+              if (columnIndex !== -1) {
+                currentTable.value.columnData[columnIndex].label = value
+              }
+            },
+            onBlur: () => {
+              editingColumnHeader.value = null
+            },
+            onKeyup: (e) => {
+              if (e.key === 'Enter') {
+                editingColumnHeader.value = null
+              }
+            },
+          })
+        }
+        else {
+          // 非编辑状态：显示可点击的文本
+          return h(
+            'div',
+            {
+              style: {
+                cursor: 'pointer',
+                padding: '4px 8px',
+                borderRadius: '4px',
+                transition: 'background-color 0.2s',
+                display: 'inline-block',
+                userSelect: 'none',
+              },
+              onClick: (e) => {
+                e.stopPropagation()
+                editingColumnHeader.value = { prop: item.prop }
+              },
+              onMouseenter: (e) => {
+                e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.06)'
+              },
+              onMouseleave: (e) => {
+                e.currentTarget.style.backgroundColor = 'transparent'
+              },
+            },
+            item.label,
+          )
+        }
+      },
+      key: item.prop,
       width: item.width,
       render: (row, rowIndex) => {
         if (row[item.prop] !== null && row[item.prop] !== undefined) {
-          const isEditing = editingCell.value?.rowIndex === rowIndex && editingCell.value?.prop === item.prop
+          // 当前行是否在编辑模式
+          const isRowEditing = editingRowIndex.value === rowIndex
 
-          if (isEditing) {
+          if (isRowEditing) {
             // 编辑状态：显示输入框
             return h(NInput, {
               value: row[item.prop],
-              autofocus: true,
+              size: 'small',
               onUpdateValue: (value) => {
                 currentTable.value.tableData[rowIndex][item.prop] = value
-              },
-              onBlur: () => {
-                editingCell.value = null
-              },
-              onKeyup: (e) => {
-                if (e.key === 'Enter') {
-                  editingCell.value = null
-                }
               },
             })
           }
@@ -257,7 +362,8 @@ const tableColumns = computed(() => {
               {
                 style: 'cursor: pointer; padding: 8px; min-height: 32px; border-radius: 4px; transition: background-color 0.2s;',
                 onClick: () => {
-                  editingCell.value = { rowIndex, prop: item.prop }
+                  // 点击单元格进入该行的编辑模式
+                  editingRowIndex.value = rowIndex
                 },
               },
               row[item.prop] || h('span', { style: 'color: #ccc;' }, '点击编辑'),
@@ -278,25 +384,48 @@ const tableColumns = computed(() => {
     })
   })
 
-  // 添加操作列
-  columns.push({
-    title: '操作',
-    key: 'actions',
-    width: 100,
-    fixed: 'right',
-    render: (row, rowIndex) => {
-      return h(
-        NButton,
-        {
-          text: true,
-          type: 'error',
-          size: 'small',
-          onClick: () => deleteRows(rowIndex),
-        },
-        { default: () => '删除行' },
-      )
-    },
-  })
+  // 添加操作列（如果没有被隐藏）
+  if (!hiddenColumns.value.includes('actions')) {
+    columns.push({
+      title: '操作',
+      key: 'actions',
+      minwidth: 80,
+      fixed: 'right',
+      render: (row, rowIndex) => {
+        const isRowEditing = editingRowIndex.value === rowIndex
+
+        // 创建按钮数组
+        const buttons = []
+
+        // 编辑模式时显示保存按钮
+        if (isRowEditing) {
+          buttons.push(
+            h(NButton, {
+              text: true,
+              type: 'success',
+              size: 'small',
+              onClick: () => {
+                editingRowIndex.value = null
+              },
+            }, { default: () => '保存' }),
+          )
+        }
+
+        // 始终显示删除按钮
+        buttons.push(
+          h(NButton, {
+            text: true,
+            type: 'error',
+            size: 'small',
+            onClick: () => deleteRows(rowIndex),
+          }, { default: () => '删除行' }),
+        )
+
+        // 返回按钮组
+        return h('div', { style: 'display: flex; gap: 8px;' }, buttons)
+      },
+    })
+  }
 
   return columns
 })
@@ -322,6 +451,9 @@ function addRows() {
     })
     tableData.push(newObj)
   }
+
+  // 新增行后自动进入该行的编辑模式
+  editingRowIndex.value = tableData.length - 1
 }
 
 /** 删除行 */
@@ -329,6 +461,15 @@ function deleteRows(rowIndex) {
   if (!currentTable.value)
     return
   currentTable.value.tableData.splice(rowIndex, 1)
+
+  // 如果删除的是正在编辑的行，清除编辑状态
+  if (editingRowIndex.value === rowIndex) {
+    editingRowIndex.value = null
+  }
+  else if (editingRowIndex.value !== null && editingRowIndex.value > rowIndex) {
+    // 如果删除的行在编辑行之前，需要调整编辑行索引
+    editingRowIndex.value -= 1
+  }
 }
 
 /** 添加列 */
@@ -340,12 +481,21 @@ function addColumn() {
   const inputValue = ref('')
 
   $dialog.create({
-    title: '提示',
+    title: '表格列名',
     content: () => {
       return h('div', [
-        h('div', { style: 'margin-bottom: 12px' }, '请输入列名'),
         h(NInput, {
           value: inputValue.value,
+          style: { width: '100%', margin: '12px 0' },
+          size: 'small',
+          ref: (el) => {
+            // 使用 ref 回调在元素挂载后立即聚焦
+            if (el) {
+              nextTick(() => {
+                el?.focus?.()
+              })
+            }
+          },
           onUpdateValue: (value) => {
             inputValue.value = value
           },
@@ -405,8 +555,9 @@ function deleteColumns(property) {
 // 选择表格
 function selectTable(tableId) {
   currentTableId.value = tableId
-  // 清除单元格编辑状态
-  editingCell.value = null
+  // 退出行编辑模式
+  editingRowIndex.value = null
+  editingColumnHeader.value = null
 }
 
 // 开始编辑表格名称
@@ -432,8 +583,9 @@ function confirmEdit(table) {
 
 // 添加新表格
 function addNewTable() {
-  // 清除单元格编辑状态
-  editingCell.value = null
+  // 退出行编辑模式
+  editingRowIndex.value = null
+  editingColumnHeader.value = null
   tableIdCounter.value++
   const newTable = {
     id: tableIdCounter.value,
@@ -449,6 +601,34 @@ function addNewTable() {
   $message.success(`成功添加新表格: ${newTable.tableName}`)
 }
 
+// 刷新表格
+function handleRefresh() {
+  $message.info('刷新表格')
+  // 这里可以添加重新加载数据的逻辑
+}
+
+// 全屏切换处理
+function handleFullscreenChange(fullscreen) {
+  isFullscreen.value = fullscreen
+}
+
+// ESC 键退出全屏
+function handleKeydown(event) {
+  if (event.key === 'Escape' && isFullscreen.value) {
+    isFullscreen.value = false
+  }
+}
+
+// 组件挂载时添加键盘事件监听
+onMounted(() => {
+  document.addEventListener('keydown', handleKeydown)
+})
+
+// 组件卸载前移除键盘事件监听
+onUnmounted(() => {
+  document.removeEventListener('keydown', handleKeydown)
+})
+
 // 删除表格
 function deleteTable(tableId) {
   if (tableNameList.value.length <= 1) {
@@ -456,8 +636,9 @@ function deleteTable(tableId) {
     return
   }
 
-  // 清除单元格编辑状态
-  editingCell.value = null
+  // 退出行编辑模式
+  editingRowIndex.value = null
+  editingColumnHeader.value = null
 
   const tableIndex = tableNameList.value.findIndex(
     table => table.id === tableId,
@@ -471,11 +652,6 @@ function deleteTable(tableId) {
     }
     $message.success(`成功删除表格: ${tableName}`)
   }
-}
-
-// 切换表格列表显示/隐藏
-function toggleTableList() {
-  showTableList.value = !showTableList.value
 }
 </script>
 
@@ -601,7 +777,7 @@ function toggleTableList() {
 }
 
 .table-item.active .edit-icon {
-  color: rgba(255, 255, 255, 0.8);
+  color: rgb(var(--primary-color));
   opacity: 1;
 }
 
@@ -610,7 +786,7 @@ function toggleTableList() {
 }
 
 .table-item.active .edit-icon:hover {
-  color: white;
+  color: var(--primary-color);
 }
 
 /* 右侧内容区域 */
@@ -626,18 +802,51 @@ function toggleTableList() {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
-.data-card {
+/* 表格容器（工具栏+数据表格） */
+.table-wrapper {
   flex: 1;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   display: flex;
   flex-direction: column;
+  gap: 0;
   overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border-radius: 6px;
 }
 
-.data-card :deep(.n-card__content) {
+.data-card {
   flex: 1;
+  display: flex;
+  flex-direction: column;
   overflow: auto;
+  background-color: var(--n-color);
   padding: 16px;
+  border-radius: 0 0 6px 6px;
+}
+
+/* 全屏模式 */
+.table-content.fullscreen-mode {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 9999;
+  background-color: var(--n-color);
+  padding: 16px;
+  border-radius: 0;
+}
+
+.table-content.fullscreen-mode .action-card {
+  border-radius: 6px;
+}
+
+.table-content.fullscreen-mode .table-wrapper {
+  flex: 1;
+  border-radius: 6px;
+}
+
+.table-content.fullscreen-mode .data-card {
+  flex: 1;
 }
 
 /* 响应式设计 */
