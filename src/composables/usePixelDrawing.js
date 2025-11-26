@@ -54,8 +54,14 @@ export function createCanvasFromPixels(pixelData, width, height, bgType = 'color
   canvas.height = height
 
   // 根据背景类型设置背景
+  // GIF 透明模式需要先填充白色作为透明标记色
   if (bgType === 'color') {
     ctx.fillStyle = bgColor
+    ctx.fillRect(0, 0, width, height)
+  }
+  else {
+    // 透明模式：填充白色作为 GIF 透明标记色
+    ctx.fillStyle = EMPTY_COLOR
     ctx.fillRect(0, 0, width, height)
   }
 
@@ -155,11 +161,10 @@ export function generateRotateFrames(pixelData, width, height, bgType = 'color',
     const ctx = canvas.getContext('2d', { willReadFrequently: true })
     canvas.width = width
     canvas.height = height
-    // 设置背景
-    if (bgType === 'color') {
-      ctx.fillStyle = bgColor
-      ctx.fillRect(0, 0, width, height)
-    }
+    // 设置背景（透明模式使用白色作为透明标记色）
+    ctx.fillStyle = bgType === 'color' ? bgColor : EMPTY_COLOR
+    ctx.fillRect(0, 0, width, height)
+
     ctx.save()
     ctx.translate(width / 2, height / 2)
     ctx.rotate((angle * Math.PI) / 180)
@@ -187,13 +192,8 @@ export function generateScaleFrames(pixelData, width, height, bgType = 'color', 
     const ctx = canvas.getContext('2d', { willReadFrequently: true })
     canvas.width = width
     canvas.height = height
-    // 设置背景
-    if (bgType === 'color') {
-      ctx.fillStyle = bgColor
-      ctx.fillRect(0, 0, width, height)
-    }
-
-    ctx.fillStyle = EMPTY_COLOR
+    // 设置背景（透明模式使用白色作为透明标记色）
+    ctx.fillStyle = bgType === 'color' ? bgColor : EMPTY_COLOR
     ctx.fillRect(0, 0, width, height)
 
     const scaledWidth = width * scale
@@ -223,12 +223,8 @@ export function generateFadeFrames(pixelData, width, height, bgType = 'color', b
     canvas.width = width
     canvas.height = height
 
-    // 设置背景
-    if (bgType === 'color') {
-      ctx.fillStyle = bgColor
-      ctx.fillRect(0, 0, width, height)
-    }
-    ctx.fillStyle = EMPTY_COLOR
+    // 设置背景（透明模式使用白色作为透明标记色）
+    ctx.fillStyle = bgType === 'color' ? bgColor : EMPTY_COLOR
     ctx.fillRect(0, 0, width, height)
 
     ctx.globalAlpha = alpha
@@ -274,21 +270,18 @@ export function generateGlowFrames(pixelData, width, height, bgType = 'color', b
     const ctx = canvas.getContext('2d', { willReadFrequently: true })
     canvas.width = width
     canvas.height = height
-    // 设置背景
-    if (bgType === 'color') {
-      ctx.fillStyle = bgColor
-      ctx.fillRect(0, 0, width, height)
-    }
-
-    ctx.fillStyle = EMPTY_COLOR
+    // 设置背景（透明模式使用白色作为透明标记色）
+    ctx.fillStyle = bgType === 'color' ? bgColor : EMPTY_COLOR
     ctx.fillRect(0, 0, width, height)
 
     const scaleX = width / DEFAULT_COLS
     const scaleY = height / DEFAULT_ROWS
 
-    // 先绘制基础图像
+    // 先绘制基础图像（跳过空白像素）
     pixelData.forEach((row, rowIndex) => {
       row.forEach((color, colIndex) => {
+        if (color === EMPTY_COLOR)
+          return
         ctx.fillStyle = color
         ctx.fillRect(colIndex * scaleX, rowIndex * scaleY, scaleX, scaleY)
       })
@@ -328,13 +321,8 @@ export function generateExplodeFrames(pixelData, width, height, bgType = 'color'
     const ctx = canvas.getContext('2d', { willReadFrequently: true })
     canvas.width = width
     canvas.height = height
-    // 设置背景
-    if (bgType === 'color') {
-      ctx.fillStyle = bgColor
-      ctx.fillRect(0, 0, width, height)
-    }
-
-    ctx.fillStyle = EMPTY_COLOR
+    // 设置背景（透明模式使用白色作为透明标记色）
+    ctx.fillStyle = bgType === 'color' ? bgColor : EMPTY_COLOR
     ctx.fillRect(0, 0, width, height)
 
     const scaleX = width / DEFAULT_COLS
@@ -398,12 +386,8 @@ export function generateParticlesFrames(pixelData, width, height, bgType = 'colo
     const ctx = canvas.getContext('2d', { willReadFrequently: true })
     canvas.width = width
     canvas.height = height
-    // 设置背景
-    if (bgType === 'color') {
-      ctx.fillStyle = bgColor
-      ctx.fillRect(0, 0, width, height)
-    }
-    ctx.fillStyle = EMPTY_COLOR
+    // 设置背景（透明模式使用白色作为透明标记色）
+    ctx.fillStyle = bgType === 'color' ? bgColor : EMPTY_COLOR
     ctx.fillRect(0, 0, width, height)
 
     const scaleX = width / DEFAULT_COLS
@@ -439,12 +423,8 @@ export function generateWaveFrames(pixelData, width, height, bgType = 'color', b
     const ctx = canvas.getContext('2d', { willReadFrequently: true })
     canvas.width = width
     canvas.height = height
-    // 设置背景
-    if (bgType === 'color') {
-      ctx.fillStyle = bgColor
-      ctx.fillRect(0, 0, width, height)
-    }
-    ctx.fillStyle = EMPTY_COLOR
+    // 设置背景（透明模式使用白色作为透明标记色）
+    ctx.fillStyle = bgType === 'color' ? bgColor : EMPTY_COLOR
     ctx.fillRect(0, 0, width, height)
 
     const scaleX = width / DEFAULT_COLS
@@ -491,13 +471,8 @@ export function generateShakeFrames(pixelData, width, height, bgType = 'color', 
     const ctx = canvas.getContext('2d', { willReadFrequently: true })
     canvas.width = width
     canvas.height = height
-    // 设置背景
-    if (bgType === 'color') {
-      ctx.fillStyle = bgColor
-      ctx.fillRect(0, 0, width, height)
-    }
-
-    ctx.fillStyle = EMPTY_COLOR
+    // 设置背景（透明模式使用白色作为透明标记色）
+    ctx.fillStyle = bgType === 'color' ? bgColor : EMPTY_COLOR
     ctx.fillRect(0, 0, width, height)
 
     const scaleX = width / DEFAULT_COLS
@@ -505,6 +480,8 @@ export function generateShakeFrames(pixelData, width, height, bgType = 'color', 
 
     pixelData.forEach((row, rowIndex) => {
       row.forEach((color, colIndex) => {
+        if (color === EMPTY_COLOR)
+          return
         ctx.fillStyle = color
         ctx.fillRect(
           (colIndex * scaleX) + offset.x,
@@ -533,13 +510,8 @@ export function generateFallFrames(pixelData, width, height, bgType = 'color', b
     const ctx = canvas.getContext('2d', { willReadFrequently: true })
     canvas.width = width
     canvas.height = height
-    // 设置背景
-    if (bgType === 'color') {
-      ctx.fillStyle = bgColor
-      ctx.fillRect(0, 0, width, height)
-    }
-
-    ctx.fillStyle = EMPTY_COLOR
+    // 设置背景（透明模式使用白色作为透明标记色）
+    ctx.fillStyle = bgType === 'color' ? bgColor : EMPTY_COLOR
     ctx.fillRect(0, 0, width, height)
 
     const scaleX = width / DEFAULT_COLS
@@ -624,9 +596,9 @@ export async function exportGif(pixelData, options, progressCallback) {
     backgroundColor,
   )
 
-  // 获取 worker 脚本路径（使用本地文件）
-  // 注意：需要确保 public/gifjs/gif.worker.js 文件存在
-  const workerUrl = '@/lib/gif.worker.js'
+  // 获取 worker 脚本路径（从 public 目录加载）
+  // public 目录下的文件可以直接通过根路径访问
+  const workerUrl = '/gif.worker.js'
 
   // 创建 GIF 实例
   const gif = new GIF({

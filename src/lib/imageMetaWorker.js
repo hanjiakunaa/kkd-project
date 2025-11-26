@@ -1,7 +1,6 @@
 /* eslint-disable no-restricted-globals */
 self.onmessage = async (event) => {
   const { id, file } = event.data || {}
-  console.log('imageMetaWorker', id, file)
   if (!id || !file) {
     self.postMessage({ id, width: 0, height: 0 })
     return
