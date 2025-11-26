@@ -118,6 +118,18 @@ export async function getPermissions() {
           enable: true,
           show: true,
         },
+        {
+          id: 26,
+          code: 'base-dynamic-table',
+          name: '动态表格',
+          type: 'MENU',
+          path: '/base/dynamic-table',
+          component: '/src/views/base/dynamic-table.vue',
+          icon: 'bi-table',
+          order: 6,
+          enable: true,
+          show: true,
+        },
 
       ],
     },

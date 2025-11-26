@@ -85,9 +85,27 @@
 <script setup>
 import { renderAsync } from 'docx-preview'
 import { onBeforeUnmount } from 'vue'
+import { pageCacheDB } from '@/utils/storage/indexedDB'
 
+const CACHE_KEY = 'multiFilePreviewList'
 const route = useRoute()
 const router = useRouter()
+const currentFileData = ref(null)
+const localObjectUrl = ref('')
+
+// 从 IndexedDB 获取文件数据
+async function getFileFromCache(fileId) {
+  try {
+    const cachedFiles = await pageCacheDB.get(CACHE_KEY)
+    if (cachedFiles && Array.isArray(cachedFiles)) {
+      return cachedFiles.find(f => f.id === fileId) || null
+    }
+  }
+  catch (error) {
+    console.error('获取缓存文件失败:', error)
+  }
+  return null
+}
 const containerRef = ref(null)
 const viewerContentRef = ref(null)
 const siderScrollRef = ref(null)
@@ -119,14 +137,35 @@ const currentZoomMode = computed(() => zoomMode.value)
 
 // 路由进入（从文件列表点击预览）时，尝试使用 objectUrl 加载
 watch(
-  () => route.query.file,
-  async (val) => {
-    if (!val) {
+  () => [route.query.file, route.query.fileId],
+  async ([fileStr, fileId]) => {
+    // 清理之前的 objectUrl
+    if (localObjectUrl.value) {
+      URL.revokeObjectURL(localObjectUrl.value)
+      localObjectUrl.value = ''
+    }
+
+    // 优先使用 fileId 从 IndexedDB 获取文件
+    if (fileId) {
+      const fileData = await getFileFromCache(fileId)
+      if (fileData) {
+        currentFileData.value = fileData
+        if (fileData.rawFile) {
+          localObjectUrl.value = URL.createObjectURL(fileData.rawFile)
+          await renderDocxFromUrl(localObjectUrl.value)
+          return
+        }
+      }
+    }
+
+    // 兼容旧的 file 参数方式
+    if (!fileStr) {
       reset()
       return
     }
     try {
-      const data = JSON.parse(val)
+      const data = JSON.parse(fileStr)
+      currentFileData.value = data
       if (data?.objectUrl) {
         await renderDocxFromUrl(data.objectUrl)
       }
@@ -154,19 +193,21 @@ async function renderDocx(file) {
     await renderAsync(buffer, containerRef.value, null, {
       className: 'docxjs',
       inWrapper: true,
-      breakPages: true,
+      breakPages: true, // 启用分页
       ignoreWidth: false,
       ignoreHeight: false,
       experimental: true,
       useBase64URL: true,
-      ignoreLastRenderedPageBreak: false,
+      ignoreLastRenderedPageBreak: false, // 不忽略最后的分页符
       renderChanges: false,
-      renderHeaders: true, // enables headers rendering
-      renderFooters: true, // enables footers rendering
-      renderFootnotes: true, // enables footnotes rendering
-      renderEndnotes: true, // enables endnotes rendering
-      renderComments: false, // enables experimental comments rendering
-      renderAltChunks: true, // enables altChunks (html parts) rendering
+      renderHeaders: true,
+      renderFooters: true,
+      renderFootnotes: true,
+      renderEndnotes: true,
+      renderComments: false,
+      renderAltChunks: true,
+      // 添加分页相关配置
+      trimXmlDeclaration: true,
     })
     hasContent.value = !!containerRef.value?.innerHTML
     await nextTick()
@@ -212,6 +253,11 @@ onBeforeUnmount(() => {
   if (containerRef.value) {
     containerRef.value.innerHTML = ''
   }
+  // 清理本地创建的 objectUrl
+  if (localObjectUrl.value) {
+    URL.revokeObjectURL(localObjectUrl.value)
+    localObjectUrl.value = ''
+  }
 })
 
 function collectPages() {
@@ -219,32 +265,38 @@ function collectPages() {
   if (!root) {
     return
   }
-  // 兼容自定义 className 前缀（docxjs）和默认前缀（docx）
-  const PAGE_SELECTORS = ['.docxjs-page', '.docx-page']
-  const WRAPPER_SELECTORS = ['.docxjs-wrapper', '.docx-wrapper']
-  let pages = []
-  for (const sel of PAGE_SELECTORS) {
-    pages = Array.from(root.querySelectorAll(sel))
-    if (pages.length)
-      break
+
+  // 查找 wrapper 容器
+  const wrapper = root.querySelector('.docxjs-wrapper') || root.querySelector('.docx-wrapper')
+
+  if (!wrapper) {
+    pageEls.value = []
+    return
   }
+
+  // 优先查找 section 和 article 元素（分页后的页面）
+  let pages = Array.from(wrapper.querySelectorAll(':scope > section, :scope > article'))
+
+  // 如果没有找到，尝试其他选择器
   if (!pages.length) {
-    let wrapper = null
-    for (const wsel of WRAPPER_SELECTORS) {
-      wrapper = root.querySelector(wsel)
-      if (wrapper)
+    const PAGE_SELECTORS = ['.docxjs-page', '.docx-page']
+    for (const sel of PAGE_SELECTORS) {
+      pages = Array.from(wrapper.querySelectorAll(sel))
+      if (pages.length)
         break
     }
-    wrapper = wrapper || root
-    pages = Array.from(wrapper.querySelectorAll(PAGE_SELECTORS.join(',')))
-    if (!pages.length) {
-      // 退化：将容器的直接子元素视为单页（不理想，但保证最少能显示）
-      pages = Array.from(wrapper.children).filter(el => el instanceof HTMLElement)
-      if (!pages.length && root instanceof HTMLElement) {
-        pages = [root]
-      }
-    }
   }
+
+  // 如果还是没有找到，将 wrapper 的直接子元素作为页面
+  if (!pages.length) {
+    pages = Array.from(wrapper.children).filter(el => el instanceof HTMLElement)
+  }
+
+  // 最后的退化方案
+  if (!pages.length && root instanceof HTMLElement) {
+    pages = [root]
+  }
+
   pageEls.value = pages
 }
 
@@ -339,9 +391,14 @@ function applyZoom() {
     return
   }
   const container = viewerContentRef.value
-  const firstPage = pageEls.value[0]
-  const pageWidth = (firstPage?.offsetWidth || 800)
-  const containerWidth = (container?.clientWidth || pageWidth)
+
+  // 获取第一个页面元素（section 或 article）
+  const firstPage = wrapper.querySelector('section, article') || pageEls.value[0]
+
+  // A4 纸张宽度 210mm，转换为像素（约 794px at 96dpi）
+  const pageWidth = firstPage?.offsetWidth || 794
+  const containerWidth = (container?.clientWidth || pageWidth) - 40 // 减去 padding
+
   if (zoomMode.value === ZOOM_MODE.FIT_PAGE) {
     scale.value = Math.min(1, containerWidth / pageWidth)
   }
@@ -349,6 +406,7 @@ function applyZoom() {
     scale.value = containerWidth / pageWidth
   }
   // ACTUAL_SIZE 模式保留当前 scale，不重置为 1
+
   wrapper.style.transform = `scale(${scale.value})`
   wrapper.style.transformOrigin = 'top center'
 }
@@ -375,6 +433,17 @@ function zoomOut() {
 
 function handleDownload() {
   try {
+    // 优先使用从 IndexedDB 获取的文件数据
+    if (currentFileData.value?.rawFile) {
+      const url = localObjectUrl.value || URL.createObjectURL(currentFileData.value.rawFile)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = currentFileData.value.name || 'document.docx'
+      a.click()
+      return
+    }
+
+    // 兼容旧方式
     const q = route.query.file
     const data = q ? JSON.parse(String(q)) : null
     const url = data?.objectUrl
@@ -499,29 +568,83 @@ function handleClose() {
   border-bottom-right-radius: 6px;
 }
 .viewer-content {
-  background: #fff;
+  background: #e5e7eb; /* 改为灰色背景，突出白色页面 */
   border: 1px solid #e5e7eb;
   border-radius: 6px;
-  padding: 12px;
+  padding: 20px;
   overflow: auto;
   min-height: 0;
   height: 100%;
+  display: flex;
+  justify-content: center;
 }
 .docx-container {
   display: block;
-}
-.docxjs {
-  background: #fff !important;
-}
-.docxjs :deep(.docx-wrapper) {
-  background: #fff !important;
-}
-.docxjs :deep(.docxjs-page),
-.docxjs :deep(.docx-page) {
-  margin: 0 auto;
+  width: 100%;
+  max-width: 100%;
 }
 
+/* docx-preview 分页样式 */
+:deep(.docx-wrapper),
 :deep(.docxjs-wrapper) {
-  background: transparent;
+  background: transparent !important;
+  padding: 0;
+}
+
+/* 页面容器样式 - 添加分页效果 */
+:deep(.docx-wrapper > section),
+:deep(.docxjs-wrapper > section),
+:deep(.docx-wrapper > article),
+:deep(.docxjs-wrapper > article) {
+  background: #fff !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin: 0 auto 20px auto !important;
+  padding: 40px 60px !important;
+  box-sizing: border-box;
+  page-break-after: always;
+  break-after: page;
+  /* A4 纸张比例 */
+  width: 210mm !important;
+  min-height: 297mm !important;
+  position: relative;
+}
+
+/* 页面内容样式 */
+:deep(.docx),
+:deep(.docxjs) {
+  background: #fff !important;
+}
+
+/* 确保分页符生效 */
+:deep(.docx-wrapper br[style*='page-break']),
+:deep(.docxjs-wrapper br[style*='page-break']) {
+  display: block;
+  page-break-after: always;
+  break-after: page;
+  height: 0;
+  margin: 0;
+  padding: 0;
+}
+
+/* 页面边距 */
+:deep(.docx-wrapper section > *),
+:deep(.docxjs-wrapper section > *),
+:deep(.docx-wrapper article > *),
+:deep(.docxjs-wrapper article > *) {
+  max-width: 100%;
+}
+
+/* 表格样式优化 */
+:deep(table) {
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+
+/* 图片样式优化 */
+:deep(img) {
+  max-width: 100%;
+  height: auto;
+  page-break-inside: avoid;
+  break-inside: avoid;
 }
 </style>
