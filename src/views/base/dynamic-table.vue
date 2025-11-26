@@ -1,143 +1,142 @@
 <template>
-  <div class="dynamic-table-wrapper">
-    <!-- 顶部操作栏 -->
-    <n-card class="header-card" :bordered="false">
-      <n-space :size="12">
-        <n-button type="info" @click="toggleTableList()">
-          <template #icon>
-            <n-icon>
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                <path fill="currentColor" d="M3 3h8v8H3V3zm10 0h8v8h-8V3zM3 13h8v8H3v-8zm10 0h8v8h-8v-8z" />
-              </svg>
-            </n-icon>
-          </template>
-          表格信息
-        </n-button>
-        <n-button type="primary" @click="addNewTable()">
-          <template #icon>
-            <n-icon>
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                <path fill="currentColor" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
-              </svg>
-            </n-icon>
-          </template>
-          添加新表格
-        </n-button>
-      </n-space>
-    </n-card>
+  <common-page :show-footer="false" :show-header="false">
+    <div class="dynamic-table-wrapper">
+      <!-- 顶部操作栏 -->
+      <n-card class="header-card" :bordered="false">
+        <n-space :size="12">
+          <n-button type="primary" @click="toggleTableList()">
+            <template #icon>
+              <n-icon>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                  <path fill="currentColor" d="M3 3h8v8H3V3zm10 0h8v8h-8V3zM3 13h8v8H3v-8zm10 0h8v8h-8v-8z" />
+                </svg>
+              </n-icon>
+            </template>
+            表格信息
+          </n-button>
+          <n-button type="default" @click="addNewTable()">
+            <template #icon>
+              <n-icon>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                  <path fill="currentColor" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
+                </svg>
+              </n-icon>
+            </template>
+            添加新表格
+          </n-button>
+        </n-space>
+      </n-card>
 
-    <!-- 主内容区域 -->
-    <div v-show="!showTableList" class="content-wrapper">
-      <div class="layout-container">
-        <!-- 左侧：表格名称列表区域 -->
-        <n-card class="table-list-card" title="表格列表" :bordered="false" size="small">
-          <div class="table-names-scroll">
-            <div
-              v-for="table in tableNameList"
-              :key="table.id"
-              :class="{ active: currentTableId === table.id }"
-              class="table-item"
-              @click="selectTable(table.id)"
-            >
-              <div class="table-name-section">
-                <n-icon v-if="!table.editing" class="table-icon" size="18">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                    <path fill="currentColor" d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z" />
-                  </svg>
-                </n-icon>
-                <span
-                  v-if="!table.editing"
-                  class="table-name"
-                >
-                  {{ table.tableName }}
-                </span>
-                <n-input
-                  v-if="table.editing"
-                  :ref="el => setEditInputRef(el, table.id)"
-                  v-model:value="table.editName"
-                  class="edit-input"
-                  size="small"
-                  @blur="confirmEdit(table)"
-                  @keyup.enter="confirmEdit(table)"
-                  @click.stop
-                />
-                <n-icon
-                  v-if="!table.editing"
-                  class="edit-icon"
-                  :class="{ visible: table.showEdit }"
-                  size="16"
-                  @click.stop="startEdit(table)"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                    <path fill="currentColor" d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a.9959.9959 0 0 0-1.41 0l-1.83 1.83l3.75 3.75l1.83-1.83z" />
-                  </svg>
-                </n-icon>
+      <!-- 主内容区域 -->
+      <div v-show="!showTableList" class="content-wrapper">
+        <div class="layout-container">
+          <!-- 左侧：表格名称列表区域 -->
+          <n-card class="table-list-card" title="表格列表" :bordered="false" size="small">
+            <div class="table-names-scroll">
+              <div
+                v-for="table in tableNameList"
+                :key="table.id"
+                :class="{ active: currentTableId === table.id }"
+                class="table-item"
+                @click="selectTable(table.id)"
+              >
+                <div class="table-name-section">
+                  <n-icon v-if="!table.editing" class="table-icon" size="18">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                      <path fill="currentColor" d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z" />
+                    </svg>
+                  </n-icon>
+                  <span
+                    v-if="!table.editing"
+                    class="table-name"
+                  >
+                    {{ table.tableName }}
+                  </span>
+                  <n-input
+                    v-if="table.editing"
+                    :ref="el => setEditInputRef(el, table.id)"
+                    v-model:value="table.editName"
+                    class="edit-input"
+                    size="small"
+                    @blur="confirmEdit(table)"
+                    @keyup.enter="confirmEdit(table)"
+                    @click.stop
+                  />
+                  <n-icon
+                    v-if="!table.editing"
+                    class="edit-icon"
+                    :class="{ visible: table.showEdit }"
+                    size="16"
+                    @click.stop="startEdit(table)"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                      <path fill="currentColor" d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a.9959.9959 0 0 0-1.41 0l-1.83 1.83l3.75 3.75l1.83-1.83z" />
+                    </svg>
+                  </n-icon>
+                </div>
               </div>
             </div>
+          </n-card>
+
+          <!-- 右侧：表格操作和数据区域 -->
+          <div class="table-content">
+            <!-- 操作按钮区域 -->
+            <n-card v-if="currentTable" class="action-card" :bordered="false" size="small">
+              <n-space :size="12">
+                <n-button type="success" @click="addColumn">
+                  <template #icon>
+                    <n-icon>
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                        <path fill="currentColor" d="M13 7h-2v4H7v2h4v4h2v-4h4v-2h-4V7zm-1-5C6.48 2 2 6.48 2 12s4.48 10 10 10s10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8s8 3.59 8 8s-3.59 8-8 8z" />
+                      </svg>
+                    </n-icon>
+                  </template>
+                  添加列
+                </n-button>
+                <n-button
+                  :disabled="currentTable.columnData.length === 0"
+                  type="success"
+                  @click="addRows"
+                >
+                  <template #icon>
+                    <n-icon>
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                        <path fill="currentColor" d="M13 7h-2v4H7v2h4v4h2v-4h4v-2h-4V7zm-1-5C6.48 2 2 6.48 2 12s4.48 10 10 10s10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8s8 3.59 8 8s-3.59 8-8 8z" />
+                      </svg>
+                    </n-icon>
+                  </template>
+                  添加行
+                </n-button>
+                <n-button
+                  v-if="tableNameList.length > 1 && currentTableId !== tableNameList[0].id"
+                  type="error"
+                  @click="deleteTable(currentTable.id)"
+                >
+                  <template #icon>
+                    <n-icon>
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                        <path fill="currentColor" d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" />
+                      </svg>
+                    </n-icon>
+                  </template>
+                  删除表格
+                </n-button>
+              </n-space>
+            </n-card>
+
+            <!-- 表格数据区域 -->
+            <n-card class="data-card" :bordered="false">
+              <n-data-table
+                :columns="tableColumns"
+                :data="currentTableData"
+                :row-key="row => row.index"
+              />
+            </n-card>
           </div>
-        </n-card>
-
-        <!-- 右侧：表格操作和数据区域 -->
-        <div class="table-content">
-          <!-- 操作按钮区域 -->
-          <n-card v-if="currentTable" class="action-card" :bordered="false" size="small">
-            <n-space :size="12">
-              <n-button type="success" @click="addColumn">
-                <template #icon>
-                  <n-icon>
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                      <path fill="currentColor" d="M13 7h-2v4H7v2h4v4h2v-4h4v-2h-4V7zm-1-5C6.48 2 2 6.48 2 12s4.48 10 10 10s10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8s8 3.59 8 8s-3.59 8-8 8z" />
-                    </svg>
-                  </n-icon>
-                </template>
-                添加列
-              </n-button>
-              <n-button
-                :disabled="currentTable.columnData.length === 0"
-                type="success"
-                @click="addRows"
-              >
-                <template #icon>
-                  <n-icon>
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                      <path fill="currentColor" d="M13 7h-2v4H7v2h4v4h2v-4h4v-2h-4V7zm-1-5C6.48 2 2 6.48 2 12s4.48 10 10 10s10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8s8 3.59 8 8s-3.59 8-8 8z" />
-                    </svg>
-                  </n-icon>
-                </template>
-                添加行
-              </n-button>
-              <n-button
-                v-if="tableNameList.length > 1 && currentTableId !== tableNameList[0].id"
-                type="error"
-                @click="deleteTable(currentTable.id)"
-              >
-                <template #icon>
-                  <n-icon>
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                      <path fill="currentColor" d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" />
-                    </svg>
-                  </n-icon>
-                </template>
-                删除表格
-              </n-button>
-            </n-space>
-          </n-card>
-
-          <!-- 表格数据区域 -->
-          <n-card class="data-card" :bordered="false">
-            <n-data-table
-              :columns="tableColumns"
-              :data="currentTableData"
-              :bordered="true"
-              :single-line="false"
-              :row-key="row => row.index"
-              striped
-            />
-          </n-card>
         </div>
       </div>
     </div>
-  </div>
+  </common-page>
 </template>
 
 <script setup>
@@ -259,12 +258,6 @@ const tableColumns = computed(() => {
                 style: 'cursor: pointer; padding: 8px; min-height: 32px; border-radius: 4px; transition: background-color 0.2s;',
                 onClick: () => {
                   editingCell.value = { rowIndex, prop: item.prop }
-                },
-                onMouseenter: (e) => {
-                  e.target.style.backgroundColor = '#f5f5f5'
-                },
-                onMouseleave: (e) => {
-                  e.target.style.backgroundColor = 'transparent'
                 },
               },
               row[item.prop] || h('span', { style: 'color: #ccc;' }, '点击编辑'),
@@ -493,8 +486,6 @@ function toggleTableList() {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  padding: 16px;
-  background: #f5f7fa;
   overflow: auto;
 }
 
@@ -557,25 +548,19 @@ function toggleTableList() {
   cursor: pointer;
   border-radius: 8px;
   transition: all 0.3s ease;
-  background: #fff;
+  background: var(--bg-color);
   border: 2px solid transparent;
 }
 
-.table-item:hover {
-  background: #f0f9ff;
-  border-color: #e3f2fd;
-  transform: translateX(4px);
-}
-
 .table-item.active {
-  background: linear-gradient(135deg, #18a058 0%, #2db77d 100%);
-  color: white;
-  border-color: #18a058;
-  box-shadow: 0 4px 12px rgba(24, 160, 88, 0.3);
+  background: var(--bg-color-hover);
+  color: var(--primary-color);
+  border-color: var(--primary-color);
+  box-shadow: 0 4px 12px rgba(var(--primary-color), 0.3);
 }
 
 .table-item.active .table-icon {
-  color: white;
+  color: var(--primary-color);
 }
 
 .table-name-section {
@@ -586,7 +571,7 @@ function toggleTableList() {
 
 .table-icon {
   flex-shrink: 0;
-  color: #18a058;
+  color: var(--primary-color);
   transition: color 0.3s;
 }
 
@@ -653,25 +638,6 @@ function toggleTableList() {
   flex: 1;
   overflow: auto;
   padding: 16px;
-}
-
-/* 表格样式优化 */
-:deep(.n-data-table) {
-  font-size: 14px;
-}
-
-:deep(.n-data-table-th) {
-  background: linear-gradient(180deg, #fafafa 0%, #f5f5f5 100%);
-  font-weight: 600;
-  color: #333;
-}
-
-:deep(.n-data-table-td) {
-  padding: 12px 16px;
-}
-
-:deep(.n-data-table-tr:hover) {
-  background: #f8fafc;
 }
 
 /* 响应式设计 */

@@ -177,6 +177,9 @@ const isGroup = computed(() => props.data?.type === 'group-node')
 .type-branch-node .node-header .node-icon {
   color: #d97706;
 }
+.type-image-gen-node .node-header .node-icon {
+  color: #db2777;
+}
 .type-output-node .node-header .node-icon {
   color: #10b981;
 }
