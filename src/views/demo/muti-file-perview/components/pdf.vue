@@ -155,13 +155,17 @@
 import * as pdfjsLib from 'pdfjs-dist'
 import { TextLayerBuilder } from 'pdfjs-dist/web/pdf_viewer'
 import { onBeforeUnmount } from 'vue'
+import { pageCacheDB } from '@/utils/storage/indexedDB'
 import 'pdfjs-dist/web/pdf_viewer.css'
 
 // 使用与项目依赖一致的 pdf.js 版本（2.9.359）
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@2.9.359/build/pdf.worker.min.js'
 
+const CACHE_KEY = 'multiFilePreviewList'
 const route = useRoute()
 const router = useRouter()
+const currentFileData = ref(null)
+const localObjectUrl = ref('')
 
 const loading = ref(false)
 const errorMsg = ref('')
@@ -282,24 +286,59 @@ async function loadOutline() {
   }
 }
 
+// 从 IndexedDB 获取文件数据
+async function getFileFromCache(fileId) {
+  try {
+    const cachedFiles = await pageCacheDB.get(CACHE_KEY)
+    if (cachedFiles && Array.isArray(cachedFiles)) {
+      return cachedFiles.find(f => f.id === fileId) || null
+    }
+  }
+  catch (error) {
+    console.error('获取缓存文件失败:', error)
+  }
+  return null
+}
+
 async function loadPdfFromRoute() {
   try {
-    const fileStr = route.query?.file || ''
+    loading.value = true
     let url = ''
-    if (fileStr) {
-      try {
-        const fileData = JSON.parse(fileStr)
-        // 提示：仅在预览调试时输出文件数据（使用 warn 符合规范）
-        console.warn('Preview file data', fileData)
 
-        // 兼容父页面传递的不同字段：objectUrl / url / src / path
-        url = fileData?.objectUrl || fileData?.url || fileData?.src || fileData?.path || ''
-      }
-      catch {
-        url = ''
+    // 优先使用 fileId 从 IndexedDB 获取文件
+    const fileId = route.query?.fileId
+    if (fileId) {
+      const fileData = await getFileFromCache(fileId)
+      if (fileData) {
+        currentFileData.value = fileData
+        // 如果有 rawFile，创建新的 objectUrl
+        if (fileData.rawFile) {
+          localObjectUrl.value = URL.createObjectURL(fileData.rawFile)
+          url = localObjectUrl.value
+        }
       }
     }
-    loading.value = true
+
+    // 兼容旧的 file 参数方式
+    if (!url) {
+      const fileStr = route.query?.file || ''
+      if (fileStr) {
+        try {
+          const fileData = JSON.parse(fileStr)
+          console.warn('Preview file data', fileData)
+          url = fileData?.objectUrl || fileData?.url || fileData?.src || fileData?.path || ''
+        }
+        catch {
+          url = ''
+        }
+      }
+    }
+
+    if (!url) {
+      errorMsg.value = '未找到文件数据'
+      return
+    }
+
     const loadingTask = pdfjsLib.getDocument({
       url,
       cMapUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@2.9.359/cmaps/',
@@ -515,18 +554,36 @@ function handleMouseUp() {
 }
 
 function handleDownload() {
+  // 优先使用从 IndexedDB 获取的文件数据
+  if (currentFileData.value?.rawFile) {
+    const url = localObjectUrl.value || URL.createObjectURL(currentFileData.value.rawFile)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = currentFileData.value.name || 'download.pdf'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    return
+  }
+
+  // 兼容旧方式
   const fileStr = route.query.file
   if (!fileStr)
     return
-  const fileData = JSON.parse(fileStr)
-  if (!fileData.objectUrl)
-    return
-  const link = document.createElement('a')
-  link.href = fileData.objectUrl
-  link.download = fileData.name || 'download.pdf'
-  document.body.appendChild(link)
-  link.click()
-  document.body.removeChild(link)
+  try {
+    const fileData = JSON.parse(fileStr)
+    if (!fileData.objectUrl)
+      return
+    const link = document.createElement('a')
+    link.href = fileData.objectUrl
+    link.download = fileData.name || 'download.pdf'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
+  catch {
+    console.warn('下载失败')
+  }
 }
 
 let resizeObserver = null
@@ -542,6 +599,11 @@ onBeforeUnmount(() => {
     renderTask.value.cancel()
   if (pdfDoc.value)
     pdfDoc.value.destroy()
+  // 清理本地创建的 objectUrl
+  if (localObjectUrl.value) {
+    URL.revokeObjectURL(localObjectUrl.value)
+    localObjectUrl.value = ''
+  }
 })
 
 onMounted(() => {
@@ -561,8 +623,13 @@ onMounted(() => {
 })
 
 watch(
-  () => route.query.file,
+  () => [route.query.file, route.query.fileId],
   () => {
+    // 清理之前的 objectUrl
+    if (localObjectUrl.value) {
+      URL.revokeObjectURL(localObjectUrl.value)
+      localObjectUrl.value = ''
+    }
     loadPdfFromRoute()
   },
 )

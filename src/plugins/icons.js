@@ -6,6 +6,7 @@ import {
   BiDownload,
   BiLayoutTextSidebarReverse,
   BiPostage,
+  BiTable,
   FaBookmark, // 书签
   FaCompress, // 退出全屏
   FaExchangeAlt, // 切换
@@ -47,13 +48,13 @@ import {
 } from 'oh-vue-icons/icons'
 import {
   RiAppsLine,
+  RiFolderLine,
   RiFullscreenExitLine,
   RiGitBranchLine,
   RiLoginCircleLine,
   RiLogoutCircleLine,
   RiRobotLine,
   RiToolsLine,
-  RiFolderLine,
 } from 'oh-vue-icons/icons/ri'
 
 addIcons(
@@ -110,6 +111,7 @@ addIcons(
   RiAppsLine,
   RiFullscreenExitLine,
   RiFolderLine,
+  BiTable,
 
 )
 

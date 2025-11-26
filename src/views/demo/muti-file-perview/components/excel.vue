@@ -39,14 +39,32 @@
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { read, utils } from 'xlsx'
+import { pageCacheDB } from '@/utils/storage/indexedDB'
 
+const CACHE_KEY = 'multiFilePreviewList'
 const route = useRoute()
 const router = useRouter()
 const loading = ref(true)
 const error = ref('')
 const rendering = ref(false)
 const fileName = ref('')
+const currentFileData = ref(null)
+const localObjectUrl = ref('')
 let lastUrl = ''
+
+// 从 IndexedDB 获取文件数据
+async function getFileFromCache(fileId) {
+  try {
+    const cachedFiles = await pageCacheDB.get(CACHE_KEY)
+    if (cachedFiles && Array.isArray(cachedFiles)) {
+      return cachedFiles.find(f => f.id === fileId) || null
+    }
+  }
+  catch (err) {
+    console.error('获取缓存文件失败:', err)
+  }
+  return null
+}
 
 // 销毁 Luckysheet 实例
 function destroyLuckysheet() {
@@ -195,8 +213,28 @@ async function renderExcel(file) {
 }
 
 // 从路由参数解析文件信息
-function getFileInfoFromRoute() {
-  // 方式1: 直接传 excelUrl
+async function getFileInfoFromRoute() {
+  // 方式1: 使用 fileId 从 IndexedDB 获取
+  if (route.query.fileId) {
+    const fileData = await getFileFromCache(route.query.fileId)
+    if (fileData) {
+      currentFileData.value = fileData
+      fileName.value = fileData.name || ''
+      if (fileData.rawFile) {
+        // 清理之前的 objectUrl
+        if (localObjectUrl.value) {
+          URL.revokeObjectURL(localObjectUrl.value)
+        }
+        localObjectUrl.value = URL.createObjectURL(fileData.rawFile)
+        return {
+          url: localObjectUrl.value,
+          name: fileData.name || `file.${fileData.extension || 'xlsx'}`,
+        }
+      }
+    }
+  }
+
+  // 方式2: 直接传 excelUrl
   if (route.query.excelUrl) {
     return {
       url: route.query.excelUrl,
@@ -204,10 +242,11 @@ function getFileInfoFromRoute() {
     }
   }
 
-  // 方式2: 传递 file JSON 字符串
+  // 方式3: 传递 file JSON 字符串
   if (route.query.file) {
     try {
       const data = JSON.parse(route.query.file)
+      currentFileData.value = data
       fileName.value = data.name || ''
       return {
         url: data.objectUrl || data.url || '',
@@ -233,7 +272,7 @@ async function renderFromRoute() {
   error.value = ''
 
   try {
-    const fileInfo = getFileInfoFromRoute()
+    const fileInfo = await getFileInfoFromRoute()
 
     // 避免重复渲染
     if (fileInfo.url === lastUrl) {
@@ -300,11 +339,17 @@ onMounted(() => {
 onBeforeUnmount(() => {
   window.removeEventListener('resize', handleResize)
   destroyLuckysheet()
+  // 清理本地创建的 objectUrl
+  if (localObjectUrl.value) {
+    URL.revokeObjectURL(localObjectUrl.value)
+    localObjectUrl.value = ''
+  }
 })
 // 监听路由参数变化
 watch(
-  () => [route.query.file, route.query.excelUrl],
+  () => [route.query.file, route.query.excelUrl, route.query.fileId],
   () => {
+    lastUrl = '' // 清除缓存的 URL，允许重新渲染
     renderFromRoute()
   },
 )

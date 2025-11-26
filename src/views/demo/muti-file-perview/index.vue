@@ -30,12 +30,13 @@
 import dayjs from 'dayjs'
 import { NButton } from 'naive-ui'
 import { OhVueIcon } from 'oh-vue-icons'
-import { onBeforeUnmount } from 'vue'
+import { pageCacheDB } from '@/utils/storage/indexedDB'
 
 defineOptions({ name: 'MultiFilePreview' })
 const router = useRouter()
 const supportedExtensions = ['pdf', 'txt', 'md', 'docx', 'xls', 'xlsx']
 
+const CACHE_KEY = 'multiFilePreviewList'
 const fileList = ref([])
 const currentFile = ref(null)
 
@@ -146,7 +147,8 @@ function handlePreview(row) {
   router.push({
     path: previewComponentMap[getExtension(row.name)],
     query: {
-      file: JSON.stringify(row),
+      // 只传递文件 ID，预览页从 IndexedDB 获取完整数据
+      fileId: row.id,
     },
   })
 }
@@ -159,7 +161,7 @@ function resetPreview() {
   currentFile.value = null
 }
 
-function removeFile(id) {
+async function removeFile(id) {
   const index = fileList.value.findIndex(item => item.id === id)
   if (index === -1)
     return
@@ -169,10 +171,12 @@ function removeFile(id) {
   if (currentFile.value?.id === removed?.id) {
     resetPreview()
   }
+  // 同步更新 IndexedDB 缓存
+  await saveCachedFiles()
   $message.success('已移除文件')
 }
 
-function handleUpload({ file, onFinish, onError }) {
+async function handleUpload({ file, onFinish, onError }) {
   try {
     const rawFile = file?.file
     if (!rawFile)
@@ -200,6 +204,8 @@ function handleUpload({ file, onFinish, onError }) {
       objectUrl: ['pdf', 'docx', 'xls', 'xlsx'].includes(extension) ? URL.createObjectURL(rawFile) : '',
     }
     fileList.value.unshift(record)
+    // 保存到 IndexedDB 缓存
+    await saveCachedFiles()
     $message.success('文件已添加，点击预览即可查看')
     onFinish?.()
   }
@@ -218,11 +224,48 @@ function onBeforeUpload({ file }) {
   return true
 }
 
-// 说明：为保证路由到预览页后 blob URL 仍然可用，
-// 这里不在卸载时统一 revoke。由具体预览页在关闭时释放资源。
-onBeforeUnmount(() => {
-  // 保留 objectUrl，避免进入预览页后地址被 revoke 导致无法加载
+// 从 IndexedDB 加载缓存的文件列表
+async function loadCachedFiles() {
+  try {
+    const cachedFiles = await pageCacheDB.get(CACHE_KEY)
+    if (cachedFiles && Array.isArray(cachedFiles)) {
+      // 重新创建 objectUrl（因为 blob URL 在页面刷新后会失效）
+      fileList.value = cachedFiles.map((file) => {
+        if (file.rawFile && ['pdf', 'docx', 'xls', 'xlsx'].includes(file.extension)) {
+          return {
+            ...file,
+            objectUrl: URL.createObjectURL(file.rawFile),
+          }
+        }
+        return file
+      })
+    }
+  }
+  catch (error) {
+    console.error('加载缓存文件失败:', error)
+  }
+}
+
+// 保存文件列表到 IndexedDB
+async function saveCachedFiles() {
+  try {
+    // 保存时不保存 objectUrl，因为它在页面刷新后会失效
+    const dataToCache = fileList.value.map(({ objectUrl, ...rest }) => rest)
+    await pageCacheDB.set(CACHE_KEY, dataToCache)
+  }
+  catch (error) {
+    console.error('保存缓存文件失败:', error)
+  }
+}
+
+// 组件挂载时加载缓存
+onMounted(() => {
+  loadCachedFiles()
 })
+
+// 注意：不在组件卸载时清理 objectUrl
+// 因为预览页面可能还需要访问这些 URL
+// objectUrl 会在文件被删除时单独清理
 </script>
 
 <style scoped>
