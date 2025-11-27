@@ -278,6 +278,18 @@ export async function getPermissions() {
           enable: true,
           show: true,
         },
+        {
+          id: 49,
+          code: 'demo-video-bg',
+          name: '视频背景',
+          type: 'MENU',
+          path: '/demo/video-bg',
+          component: '/src/views/demo/video-bg/index.vue',
+          icon: 'bi-person-video2',
+          order: 9,
+          enable: true,
+          show: true,
+        },
       ],
     },
     {

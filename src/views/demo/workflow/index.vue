@@ -17,7 +17,7 @@
         </n-button>
       </div>
       <div class="toolbar-right">
-        <n-button size="small" @click="openSettings">
+        <n-button size="small" quaternary :focusable="false" @click="openSettings">
           <template #icon>
             <h-icon name="ri-settings-3-line" />
           </template>

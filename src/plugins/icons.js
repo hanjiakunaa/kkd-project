@@ -5,6 +5,7 @@ import {
   BiCodeSlash,
   BiDownload,
   BiLayoutTextSidebarReverse,
+  BiPersonVideo2, // video icon
   BiPostage,
   BiTable,
   FaBookmark, // 书签
@@ -54,6 +55,7 @@ import {
   RiLoginCircleLine,
   RiLogoutCircleLine,
   RiRobotLine,
+  RiSettings3Line,
   RiToolsLine,
 } from 'oh-vue-icons/icons/ri'
 
@@ -112,7 +114,8 @@ addIcons(
   RiFullscreenExitLine,
   RiFolderLine,
   BiTable,
-
+  RiSettings3Line,
+  BiPersonVideo2,
 )
 
 export const conponentIconPlugins = {

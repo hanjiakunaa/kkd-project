@@ -160,7 +160,7 @@
 <script setup>
 import { NButton, NIcon, NInput, useThemeVars } from 'naive-ui'
 import { getCurrentInstance } from 'vue'
-import TableToolbar from '@/components/TableToolbar/index.vue'
+import { TableToolbar } from '@/components'
 
 defineOptions({ name: 'BaseDynamicTable' })
 
