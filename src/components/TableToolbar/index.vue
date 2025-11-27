@@ -344,7 +344,6 @@ function toggleFullscreen() {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 16px;
   background-color: var(--n-color);
   border-radius: 6px 6px 0 0;
   border-bottom: 1px solid var(--n-border-color);

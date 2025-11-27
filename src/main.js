@@ -1,11 +1,12 @@
+import screenfull from 'screenfull'
 import { createApp } from 'vue'
 import App from './App.vue'
 import { setupDirectives } from './directives'
 import { setupGlobalComponents } from './plugins/components'
 import { conponentIconPlugins } from './plugins/icons'
 import { setupRouter } from './router'
-import { setupStore } from './store'
 
+import { setupStore } from './store'
 import { setupNaiveDiscreteApi } from './utils'
 import '@/styles/reset.css'
 import '@/styles/global.css'
@@ -13,6 +14,9 @@ import 'uno.css'
 
 async function bootstrap() {
   const app = createApp(App)
+
+  // 挂载 screenfull 到全局属性
+  app.config.globalProperties.$screenfull = screenfull
 
   // 注册全局通用组件
   app.use(setupGlobalComponents)

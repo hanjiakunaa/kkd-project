@@ -105,8 +105,20 @@ export function setupNaiveDiscreteApi() {
     { configProviderProps },
   )
 
+  // 创建左下角的 notification 实例
+  const { notification: notificationBottomLeft } = NaiveUI.createDiscreteApi(
+    ['notification'],
+    {
+      configProviderProps,
+      notificationProviderProps: {
+        placement: 'bottom-left',
+      },
+    },
+  )
+
   window.$loadingBar = loadingBar
   window.$notification = notification
+  window.$notificationBottomLeft = notificationBottomLeft
   window.$message = setupMessage(message)
   window.$dialog = setupDialog(dialog)
 }

@@ -79,40 +79,43 @@
           </n-card>
 
           <!-- 右侧：表格操作和数据区域 -->
-          <div class="table-content" :class="{ 'fullscreen-mode': isFullscreen }">
+          <div
+            ref="tableContentRef"
+            class="table-content"
+            :class="{ 'fullscreen-mode': isFullscreen }"
+            :style="{ backgroundColor: isFullscreen ? themeVars.modalColor : '' }"
+          >
             <!-- 操作按钮区域 -->
-            <n-card v-if="currentTable" class="action-card" :bordered="false" size="small">
-              <n-space :size="8">
-                <n-button type="success" size="small" @click="addColumn">
-                  <template #icon>
-                    <i class="i-carbon-add-alt" />
-                  </template>
-                  添加列
-                </n-button>
-                <n-button
-                  :disabled="currentTable.columnData.length === 0"
-                  type="success"
-                  size="small"
-                  @click="addRows"
-                >
-                  <template #icon>
-                    <i class="i-carbon-add" />
-                  </template>
-                  添加行
-                </n-button>
-                <n-button
-                  v-if="tableNameList.length > 1 && currentTableId !== tableNameList[0].id"
-                  type="error"
-                  size="small"
-                  @click="deleteTable(currentTable.id)"
-                >
-                  <template #icon>
-                    <i class="i-carbon-trash-can" />
-                  </template>
-                  删除表格
-                </n-button>
-              </n-space>
-            </n-card>
+            <n-space v-if="currentTable" :size="8">
+              <n-button type="success" size="small" @click="addColumn">
+                <template #icon>
+                  <i class="i-carbon-add-alt" />
+                </template>
+                添加列
+              </n-button>
+              <n-button
+                :disabled="currentTable.columnData.length === 0"
+                type="success"
+                size="small"
+                @click="addRows"
+              >
+                <template #icon>
+                  <i class="i-carbon-add" />
+                </template>
+                添加行
+              </n-button>
+              <n-button
+                v-if="tableNameList.length > 1 && currentTableId !== tableNameList[0].id"
+                type="error"
+                size="small"
+                @click="deleteTable(currentTable.id)"
+              >
+                <template #icon>
+                  <i class="i-carbon-trash-can" />
+                </template>
+                删除表格
+              </n-button>
+            </n-space>
 
             <!-- 表格区域（包含工具栏和数据） -->
             <div class="table-wrapper">
@@ -128,9 +131,11 @@
                 :show-add="true"
                 :show-delete="true"
                 :show-detail="true"
-                :show-fullscreen="false"
+                :show-fullscreen="true"
                 @refresh="handleRefresh"
                 @fullscreen-change="handleFullscreenChange"
+                @add="addColumn"
+                @delete="deleteTable(currentTable.id)"
               />
 
               <!-- 表格数据区域 -->
@@ -153,10 +158,14 @@
 </template>
 
 <script setup>
-import { NButton, NCard, NDataTable, NIcon, NInput, NSpace } from 'naive-ui'
+import { NButton, NIcon, NInput, useThemeVars } from 'naive-ui'
+import { getCurrentInstance } from 'vue'
 import TableToolbar from '@/components/TableToolbar/index.vue'
 
 defineOptions({ name: 'BaseDynamicTable' })
+
+const { proxy } = getCurrentInstance()
+const screenfull = proxy.$screenfull
 
 const currentTableId = ref(1) // 当前选中的表格ID
 const tableIdCounter = ref(1) // 表格ID计数器
@@ -164,6 +173,8 @@ const columnPropIndex = ref(3) // 列属性自增
 const editInputRefs = ref({})
 const editingRowIndex = ref(null) // 当前正在编辑的行索引
 const editingColumnHeader = ref(null) // 当前正在编辑的列标题 {prop}
+const tableContentRef = ref(null) // 表格内容区域引用
+const themeVars = useThemeVars()
 
 // 表格配置
 const tableStriped = ref(false) // 是否显示斑马纹
@@ -608,26 +619,20 @@ function handleRefresh() {
 }
 
 // 全屏切换处理
-function handleFullscreenChange(fullscreen) {
-  isFullscreen.value = fullscreen
-}
-
-// ESC 键退出全屏
-function handleKeydown(event) {
-  if (event.key === 'Escape' && isFullscreen.value) {
-    isFullscreen.value = false
+function handleFullscreenChange() {
+  if (!screenfull.isEnabled) {
+    $message.warning('您的浏览器不支持全屏')
+    return
+  }
+  if (tableContentRef.value) {
+    screenfull.toggle(tableContentRef.value)
   }
 }
 
-// 组件挂载时添加键盘事件监听
-onMounted(() => {
-  document.addEventListener('keydown', handleKeydown)
-})
-
-// 组件卸载前移除键盘事件监听
-onUnmounted(() => {
-  document.removeEventListener('keydown', handleKeydown)
-})
+// 监听全屏状态变化
+function changeFullscreen() {
+  isFullscreen.value = screenfull.isFullscreen
+}
 
 // 删除表格
 function deleteTable(tableId) {
@@ -653,6 +658,20 @@ function deleteTable(tableId) {
     $message.success(`成功删除表格: ${tableName}`)
   }
 }
+
+// 组件挂载时添加事件监听
+onMounted(() => {
+  if (screenfull.isEnabled) {
+    screenfull.on('change', changeFullscreen)
+  }
+})
+
+// 组件卸载前移除事件监听
+onUnmounted(() => {
+  if (screenfull.isEnabled) {
+    screenfull.off('change', changeFullscreen)
+  }
+})
 </script>
 
 <style scoped>
@@ -798,10 +817,6 @@ function deleteTable(tableId) {
   overflow: hidden;
 }
 
-.action-card {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-}
-
 /* 表格容器（工具栏+数据表格） */
 .table-wrapper {
   flex: 1;
@@ -819,7 +834,6 @@ function deleteTable(tableId) {
   flex-direction: column;
   overflow: auto;
   background-color: var(--n-color);
-  padding: 16px;
   border-radius: 0 0 6px 6px;
 }
 
@@ -831,7 +845,6 @@ function deleteTable(tableId) {
   right: 0;
   bottom: 0;
   z-index: 9999;
-  background-color: var(--n-color);
   padding: 16px;
   border-radius: 0;
 }

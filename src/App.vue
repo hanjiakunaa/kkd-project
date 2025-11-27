@@ -26,7 +26,10 @@
 <script setup>
 import { darkTheme, dateZhCN, zhCN } from 'naive-ui'
 import { LayoutFloatMenu } from '@/components'
+import { useWelcomeBack } from '@/composables'
 import { useAppStore, useTabStore } from '@/store'
+
+useWelcomeBack()
 
 const layouts = new Map()
 function getLayout(name) {
