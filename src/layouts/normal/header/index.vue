@@ -7,6 +7,7 @@
     <span class="mx-6 opacity-20">|</span>
 
     <div class="flex flex-shrink-0 items-center px-12 text-18">
+      <layout-search />
       <n-tooltip trigger="hover">
         <template #trigger>
           <a
@@ -37,7 +38,7 @@
 </template>
 
 <script setup>
-import { ToggleTheme } from '@/components'
+import { LayoutSearch, ToggleTheme } from '@/components'
 import { AppTab, BeginnerGuide, Fullscreen, MenuCollapse, UserAvatar } from '@/layouts/components'
 </script>
 

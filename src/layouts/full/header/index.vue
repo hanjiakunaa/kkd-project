@@ -5,6 +5,7 @@
     <bread-crumb />
 
     <div class="ml-auto flex flex-shrink-0 items-center px-12 text-18">
+      <layout-search />
       <n-tooltip trigger="hover">
         <template #trigger>
           <a
@@ -36,7 +37,7 @@
 </template>
 
 <script setup>
-import { DailyQuote, ToggleTheme } from '@/components'
+import { DailyQuote, LayoutSearch, ToggleTheme } from '@/components'
 import { BeginnerGuide, BreadCrumb, Fullscreen, MenuCollapse, UserAvatar } from '@/layouts/components'
 </script>
 

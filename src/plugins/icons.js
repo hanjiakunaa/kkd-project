@@ -55,6 +55,7 @@ import {
   RiLoginCircleLine,
   RiLogoutCircleLine,
   RiRobotLine,
+  RiSearchLine,
   RiSettings3Line,
   RiToolsLine,
 } from 'oh-vue-icons/icons/ri'
@@ -116,6 +117,8 @@ addIcons(
   BiTable,
   RiSettings3Line,
   BiPersonVideo2,
+  RiSearchLine,
+
 )
 
 export const conponentIconPlugins = {
