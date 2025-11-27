@@ -18,21 +18,26 @@
           </transition>
         </component>
         <layout-float-menu />
-        <analytics />
       </router-view>
     </n-notification-provider>
   </n-config-provider>
 </template>
 
 <script setup>
-import { Analytics } from '@vercel/analytics/next'
+import { inject } from '@vercel/analytics'
 import { darkTheme, dateZhCN, zhCN } from 'naive-ui'
 import { LayoutFloatMenu } from '@/components'
 import { useWelcomeBack } from '@/composables'
 import { useAppStore, useTabStore } from '@/store'
 
 useWelcomeBack()
-
+inject({
+  mode: 'production', // 'auto' | 'development' | 'production'
+  beforeSend: (event) => {
+    // 可以在发送前修改或过滤事件
+    return event
+  },
+})
 const layouts = new Map()
 function getLayout(name) {
   // 利用map将加载过的layout缓存起来，防止重新加载layout导致页面闪烁
