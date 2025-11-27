@@ -18,12 +18,14 @@
           </transition>
         </component>
         <layout-float-menu />
+        <analytics />
       </router-view>
     </n-notification-provider>
   </n-config-provider>
 </template>
 
 <script setup>
+import { Analytics } from '@vercel/analytics/next'
 import { darkTheme, dateZhCN, zhCN } from 'naive-ui'
 import { LayoutFloatMenu } from '@/components'
 import { useWelcomeBack } from '@/composables'
