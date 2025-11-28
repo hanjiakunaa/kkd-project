@@ -5,9 +5,13 @@
 
 import { AudioGenExecutor } from './audio-gen'
 import { BaseExecutor } from './base'
+import { HttpExecutor } from './http'
 import { ImageGenExecutor } from './image-gen'
 import { LLMExecutor } from './llm'
+import { LoopExecutor } from './loop'
+import { OCRExecutor } from './ocr'
 import { VideoGenExecutor } from './video-gen'
+import { VisionExecutor } from './vision'
 
 // 执行器映射
 const EXECUTORS = {
@@ -16,6 +20,10 @@ const EXECUTORS = {
   'video-gen-node': VideoGenExecutor,
   'audio-gen-node': AudioGenExecutor,
   'image-to-video-node': VideoGenExecutor, // 复用视频生成执行器
+  'loop-node': LoopExecutor,
+  'http-node': HttpExecutor,
+  'vision-node': VisionExecutor,
+  'ocr-node': OCRExecutor,
 
   // 简单节点执行器
   'input-node': class InputExecutor extends BaseExecutor {
@@ -157,5 +165,4 @@ export function getSupportedNodeTypes() {
   return Object.keys(EXECUTORS)
 }
 
-export { AudioGenExecutor, BaseExecutor, ImageGenExecutor, LLMExecutor, VideoGenExecutor }
-
+export { AudioGenExecutor, BaseExecutor, ImageGenExecutor, LLMExecutor, OCRExecutor, VideoGenExecutor, VisionExecutor }

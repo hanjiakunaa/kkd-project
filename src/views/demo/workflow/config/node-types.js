@@ -110,6 +110,21 @@ export const NODE_TYPES = [
       motion: 'auto',
     },
   },
+  {
+    type: 'vision-node',
+    label: 'Vision 图片理解',
+    category: NODE_CATEGORIES.AI_GENERATION,
+    icon: 'ri-eye-line',
+    color: '#06b6d4',
+    description: '使用多模态大模型理解图片内容',
+    defaultParams: {
+      provider: 'openai',
+      model: 'gpt-4o',
+      prompt: '请详细描述这张图片的内容。',
+      temperature: 0.7,
+      maxTokens: 1000,
+    },
+  },
 
   // ==================== 数据处理节点 ====================
   {
@@ -124,19 +139,19 @@ export const NODE_TYPES = [
       options: {},
     },
   },
-  {
-    type: 'image-process-node',
-    label: '图片处理',
-    category: NODE_CATEGORIES.PROCESSING,
-    icon: 'ri-edit-line',
-    color: '#ec4899',
-    description: '图片裁剪、缩放、滤镜等操作',
-    defaultParams: {
-      operation: 'resize',
-      width: 1024,
-      height: 1024,
-    },
-  },
+  // {
+  //   type: 'image-process-node',
+  //   label: '图片处理',
+  //   category: NODE_CATEGORIES.PROCESSING,
+  //   icon: 'ri-edit-line',
+  //   color: '#ec4899',
+  //   description: '图片裁剪、缩放、滤镜等操作 (待实现)',
+  //   defaultParams: {
+  //     operation: 'resize',
+  //     width: 1024,
+  //     height: 1024,
+  //   },
+  // },
   {
     type: 'ocr-node',
     label: 'OCR 识别',
@@ -149,18 +164,18 @@ export const NODE_TYPES = [
       language: 'auto',
     },
   },
-  {
-    type: 'embedding-node',
-    label: '向量化',
-    category: NODE_CATEGORIES.PROCESSING,
-    icon: 'ri-code-box-line',
-    color: '#06b6d4',
-    description: '将文本转换为向量表示',
-    defaultParams: {
-      provider: 'openai',
-      model: 'text-embedding-3-small',
-    },
-  },
+  // {
+  //   type: 'embedding-node',
+  //   label: '向量化',
+  //   category: NODE_CATEGORIES.PROCESSING,
+  //   icon: 'ri-code-box-line',
+  //   color: '#06b6d4',
+  //   description: '将文本转换为向量表示 (待实现)',
+  //   defaultParams: {
+  //     provider: 'openai',
+  //     model: 'text-embedding-3-small',
+  //   },
+  // },
 
   // ==================== 逻辑控制节点 ====================
   {
@@ -215,43 +230,43 @@ export const NODE_TYPES = [
       headers: {},
     },
   },
-  {
-    type: 'database-node',
-    label: '数据库',
-    category: NODE_CATEGORIES.DATA,
-    icon: 'ri-database-line',
-    color: '#0891b2',
-    description: '查询或操作数据库',
-    defaultParams: {
-      type: 'query',
-      sql: '',
-    },
-  },
-  {
-    type: 'file-node',
-    label: '文件操作',
-    category: NODE_CATEGORIES.DATA,
-    icon: 'ri-file-line',
-    color: '#64748b',
-    description: '读取或写入文件',
-    defaultParams: {
-      operation: 'read',
-      path: '',
-    },
-  },
+  // {
+  //   type: 'database-node',
+  //   label: '数据库',
+  //   category: NODE_CATEGORIES.DATA,
+  //   icon: 'ri-database-line',
+  //   color: '#0891b2',
+  //   description: '查询或操作数据库 (待实现)',
+  //   defaultParams: {
+  //     type: 'query',
+  //     sql: '',
+  //   },
+  // },
+  // {
+  //   type: 'file-node',
+  //   label: '文件操作',
+  //   category: NODE_CATEGORIES.DATA,
+  //   icon: 'ri-file-line',
+  //   color: '#64748b',
+  //   description: '读取或写入文件 (待实现)',
+  //   defaultParams: {
+  //     operation: 'read',
+  //     path: '',
+  //   },
+  // },
 
   // ==================== 组织管理节点 ====================
-  {
-    type: 'group-node',
-    label: '工作组',
-    category: NODE_CATEGORIES.ORGANIZATION,
-    icon: 'ri-folder-line',
-    color: '#9ca3af',
-    description: '将多个节点组织在一起',
-    defaultParams: {
-      collapsed: false,
-    },
-  },
+  // {
+  //   type: 'group-node',
+  //   label: '工作组',
+  //   category: NODE_CATEGORIES.ORGANIZATION,
+  //   icon: 'ri-folder-line',
+  //   color: '#9ca3af',
+  //   description: '将多个节点组织在一起 (待实现)',
+  //   defaultParams: {
+  //     collapsed: false,
+  //   },
+  // },
   {
     type: 'tool-node',
     label: '自定义工具',

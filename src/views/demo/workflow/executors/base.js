@@ -10,39 +10,39 @@ export class BaseExecutor {
 
   /**
    * 执行节点逻辑
-   * @param {Object} node - 节点对象
-   * @param {any} input - 输入数据
-   * @param {Object} context - 执行上下文
+   * @param {Object} _node - 节点对象
+   * @param {any} _input - 输入数据
+   * @param {Object} _context - 执行上下文
    * @returns {Promise<any>} - 输出数据
    */
-  async execute(node, input, context) {
+  async execute(_node, _input, _context) {
     throw new Error(`${this.name}.execute() must be implemented`)
   }
 
   /**
    * 验证节点配置
-   * @param {Object} node - 节点对象
+   * @param {Object} _node - 节点对象
    * @returns {Object} - {valid: boolean, error: string}
    */
-  validate(node) {
+  validate(_node) {
     return { valid: true, error: null }
   }
 
   /**
    * 获取节点的预估执行时间（毫秒）
-   * @param {Object} node - 节点对象
+   * @param {Object} _node - 节点对象
    * @returns {number}
    */
-  getEstimatedDuration(node) {
+  getEstimatedDuration(_node) {
     return 1000 // 默认 1 秒
   }
 
   /**
    * 获取节点的预估成本（美元）
-   * @param {Object} node - 节点对象
+   * @param {Object} _node - 节点对象
    * @returns {number}
    */
-  getEstimatedCost(node) {
+  getEstimatedCost(_node) {
     return 0
   }
 

@@ -34,6 +34,7 @@ import {
   FcHome, // 首页
   FcSearch,
   FcWorkflow,
+  HiSaveAs,
   HiSolidViewList,
   HiTemplate,
   LaBlogger,
@@ -176,7 +177,7 @@ addIcons(
   BiViewList,
   SiOpenai,
   HiTemplate,
-
+  HiSaveAs,
 )
 
 export const conponentIconPlugins = {

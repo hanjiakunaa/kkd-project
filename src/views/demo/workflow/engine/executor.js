@@ -4,6 +4,7 @@
  */
 
 import { getExecutor } from '../executors'
+import { resultCache } from '../utils/cache'
 import { getUserFriendlyMessage, logError, WorkflowError } from '../utils/error-handler'
 import { retry } from '../utils/retry'
 
@@ -13,6 +14,7 @@ export class WorkflowExecutor {
       maxConcurrency: 3, // 最大并发数
       enableRetry: true, // 启用重试
       enableStream: false, // 启用流式输出
+      enableCache: true, // 启用结果缓存
       timeout: 60000, // 超时时间（毫秒）
       ...options,
     }
@@ -22,6 +24,8 @@ export class WorkflowExecutor {
     this.nodeOutputs = new Map() // 存储节点输出
     this.executionLogs = [] // 执行日志
     this.listeners = new Map() // 事件监听器
+    this.cacheHits = 0 // 缓存命中次数
+    this.cacheMisses = 0 // 缓存未命中次数
   }
 
   /**
@@ -40,6 +44,8 @@ export class WorkflowExecutor {
     this.isPaused = false
     this.nodeOutputs.clear()
     this.executionLogs = []
+    this.cacheHits = 0
+    this.cacheMisses = 0
 
     try {
       // 1. 查找起始节点
@@ -57,7 +63,7 @@ export class WorkflowExecutor {
       })
 
       // 3. 使用 BFS 执行工作流
-      const queue = [...startNodes.map(n => n.id)]
+      const queue = startNodes.map(n => n.id)
       const visited = new Set()
 
       while (queue.length > 0 && !this.isPaused) {
@@ -102,6 +108,13 @@ export class WorkflowExecutor {
         success: true,
         logs: this.executionLogs,
         outputs: Object.fromEntries(this.nodeOutputs),
+        cacheStats: {
+          hits: this.cacheHits,
+          misses: this.cacheMisses,
+          hitRate: this.cacheHits + this.cacheMisses > 0
+            ? (this.cacheHits / (this.cacheHits + this.cacheMisses) * 100).toFixed(2) + '%'
+            : '0%',
+        },
       }
     }
     catch (error) {
@@ -141,39 +154,65 @@ export class WorkflowExecutor {
     const startTimestamp = Date.now()
 
     try {
-      // 获取执行器
-      const executor = getExecutor(node.data.type)
-
-      // 创建执行上下文
-      const execContext = {
-        ...context,
-        // 如果 context 中已经提供了 getApiKey 和 getBaseUrl 函数，使用它们
-        // 否则使用默认实现
-        getApiKey: context.getApiKey || (provider => context.apiKeys?.[provider] || ''),
-        getBaseUrl: context.getBaseUrl || (provider => context.baseUrls?.[provider] || ''),
-        useStream: this.options.enableStream,
-        onStreamChunk: (nodeId, chunk) => {
-          this._emit('streamChunk', { nodeId, chunk })
-        },
-        onStatusUpdate: (nodeId, status) => {
-          this._emit('statusUpdate', { nodeId, status })
-        },
-        getNodeInputs: nodeId => this._getNodeInputs(nodeId, edges),
-      }
-
-      // 执行节点逻辑（带重试）
+      // 检查缓存
       let output
-      if (this.options.enableRetry) {
-        output = await retry(
-          () => executor.execute(node, input, execContext),
-          { maxRetries: 2 },
-          (attempt, error, delay) => {
-            this._emit('nodeRetry', { nodeId: node.id, attempt, error, delay })
-          },
-        )
+      let fromCache = false
+
+      if (this.options.enableCache && this._isCacheable(node)) {
+        const cachedOutput = await resultCache.get(node, input)
+        if (cachedOutput !== null) {
+          output = cachedOutput
+          fromCache = true
+          this.cacheHits++
+          log.cached = true
+          this._emit('cacheHit', { nodeId: node.id })
+          console.log(`[WorkflowExecutor] 使用缓存结果: ${node.id}`)
+        }
+        else {
+          this.cacheMisses++
+        }
       }
-      else {
-        output = await executor.execute(node, input, execContext)
+
+      // 如果没有缓存,则执行节点
+      if (!fromCache) {
+        // 获取执行器
+        const executor = getExecutor(node.data.type)
+
+        // 创建执行上下文
+        const execContext = {
+          ...context,
+          // 如果 context 中已经提供了 getApiKey 和 getBaseUrl 函数，使用它们
+          // 否则使用默认实现
+          getApiKey: context.getApiKey || (provider => context.apiKeys?.[provider] || ''),
+          getBaseUrl: context.getBaseUrl || (provider => context.baseUrls?.[provider] || ''),
+          useStream: this.options.enableStream,
+          onStreamChunk: (nodeId, chunk) => {
+            this._emit('streamChunk', { nodeId, chunk })
+          },
+          onStatusUpdate: (nodeId, status) => {
+            this._emit('statusUpdate', { nodeId, status })
+          },
+          getNodeInputs: nodeId => this._getNodeInputs(nodeId, edges),
+        }
+
+        // 执行节点逻辑（带重试）
+        if (this.options.enableRetry) {
+          output = await retry(
+            () => executor.execute(node, input, execContext),
+            { maxRetries: 2 },
+            (attempt, error, delay) => {
+              this._emit('nodeRetry', { nodeId: node.id, attempt, error, delay })
+            },
+          )
+        }
+        else {
+          output = await executor.execute(node, input, execContext)
+        }
+
+        // 保存到缓存
+        if (this.options.enableCache && this._isCacheable(node)) {
+          await resultCache.set(node, input, output)
+        }
       }
 
       // 保存输出
@@ -270,6 +309,25 @@ export class WorkflowExecutor {
   }
 
   /**
+   * 判断节点是否可缓存
+   * @private
+   */
+  _isCacheable(node) {
+    // 以下节点类型可以缓存
+    const cacheableTypes = [
+      'llm-node',
+      'image-gen-node',
+      'video-gen-node',
+      'audio-gen-node',
+      'vision-node',
+      'ocr-node',
+      'text-process-node',
+    ]
+
+    return cacheableTypes.includes(node.data.type)
+  }
+
+  /**
    * 格式化输出用于显示
    * @private
    */
@@ -345,6 +403,36 @@ export class WorkflowExecutor {
   stop() {
     this.isPaused = true
     this.isRunning = false
+  }
+
+  /**
+   * 启用缓存
+   */
+  enableCache() {
+    this.options.enableCache = true
+    resultCache.enable()
+  }
+
+  /**
+   * 禁用缓存
+   */
+  disableCache() {
+    this.options.enableCache = false
+    resultCache.disable()
+  }
+
+  /**
+   * 清空缓存
+   */
+  async clearCache() {
+    await resultCache.clear()
+  }
+
+  /**
+   * 获取缓存统计
+   */
+  async getCacheStats() {
+    return await resultCache.getStats()
   }
 }
 

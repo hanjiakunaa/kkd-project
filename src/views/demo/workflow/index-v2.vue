@@ -3,6 +3,13 @@
     <!-- 顶部工具栏 -->
     <div class="viewer-toolbar">
       <div class="toolbar-left">
+        <n-button size="small" tertiary @click="managerOpen = true">
+          <template #icon>
+            <h-icon name="ri-folder-line" />
+          </template>
+          工作流管理
+        </n-button>
+        <div class="toolbar-divider" />
         <n-button size="small" tertiary @click="templateOpen = true">
           <template #icon>
             <h-icon name="hi-template" />
@@ -31,6 +38,13 @@
         </n-button>
       </div>
       <div class="toolbar-right">
+        <n-button size="small" tertiary @click="showSaveDialog">
+          <template #icon>
+            <h-icon name="hi-save-as" />
+          </template>
+          保存工作流
+        </n-button>
+        <div class="toolbar-divider" />
         <n-button size="small" quaternary @click="settingsOpen = true">
           <template #icon>
             <h-icon name="ri-settings-3-line" />
@@ -77,6 +91,9 @@
         <special-edge v-bind="props" />
       </template>
     </vue-flow>
+
+    <!-- 工作流管理面板 -->
+    <workflow-manager :show="managerOpen" @update:show="managerOpen = $event" @load-workflow="loadSavedWorkflow" @view-history="viewHistory" />
 
     <!-- 模板库面板 -->
     <template-gallery :show="templateOpen" @update:show="templateOpen = $event" @load-template="loadTemplate" />
@@ -254,10 +271,12 @@ import ProviderSettings from './components/ProviderSettings.vue'
 import SpecialEdge from './components/SpecialEdge.vue'
 import SpecialNode from './components/SpecialNode.vue'
 import TemplateGallery from './components/TemplateGallery.vue'
+import WorkflowManager from './components/WorkflowManager.vue'
 import { getModels } from './config/models'
 import { getNodeConfig } from './config/node-types'
 import { AI_PROVIDERS, getProvidersByCapability } from './config/providers'
 import { WorkflowExecutor } from './engine/executor'
+import { workflowStorage } from './utils/storage'
 
 const router = useRouter()
 
@@ -307,6 +326,7 @@ const edges = ref([
 ])
 
 // 面板状态
+const managerOpen = ref(false)
 const templateOpen = ref(false)
 const paletteOpen = ref(false)
 const settingsOpen = ref(false)
@@ -314,6 +334,13 @@ const inspectorOpen = ref(false)
 const exportOpen = ref(false)
 const importOpen = ref(false)
 const logsOpen = ref(false)
+
+// 当前工作流信息
+const currentWorkflow = ref({
+  id: null,
+  name: '未命名工作流',
+  description: '',
+})
 
 // 选中的节点/边
 const selectedNodeId = ref(null)
@@ -597,8 +624,6 @@ function applyTemplate(template) {
   nextTick(() => {
     handleFit()
   })
-
-  window.$message?.success(`已加载模板：${template.name}`)
 }
 
 // 将模板类型转换为系统类型
@@ -713,6 +738,9 @@ async function runWorkflow() {
 
     window.$message?.success('工作流执行完成')
 
+    // 保存执行历史
+    await saveExecutionHistory(result)
+
     // 下载 Markdown 报告
     downloadMarkdown(result.logs)
   }
@@ -812,11 +840,169 @@ function truncate(text, length) {
   return text.length > length ? `${text.slice(0, length)}...` : text
 }
 
+// ==================== 工作流保存功能 ====================
+
+// 显示保存对话框
+function showSaveDialog() {
+  window.$dialog?.create({
+    title: currentWorkflow.value.id ? '保存工作流' : '另存为',
+    content: () => {
+      return h('div', [
+        h('div', { style: 'margin-bottom: 12px' }, [
+          h('label', { style: 'display: block; margin-bottom: 4px; font-size: 14px' }, '工作流名称'),
+          h('input', {
+            id: 'workflow-name-input',
+            value: currentWorkflow.value.name,
+            placeholder: '请输入工作流名称',
+            style: 'width: 100%; padding: 8px; border: 1px solid #e5e7eb; border-radius: 4px',
+          }),
+        ]),
+        h('div', [
+          h('label', { style: 'display: block; margin-bottom: 4px; font-size: 14px' }, '描述（可选）'),
+          h('textarea', {
+            id: 'workflow-desc-input',
+            value: currentWorkflow.value.description,
+            placeholder: '请输入工作流描述',
+            style: 'width: 100%; padding: 8px; border: 1px solid #e5e7eb; border-radius: 4px; resize: vertical',
+            rows: 3,
+          }),
+        ]),
+      ])
+    },
+    positiveText: '保存',
+    negativeText: '取消',
+    onPositiveClick: async () => {
+      const nameInput = document.getElementById('workflow-name-input')
+      const descInput = document.getElementById('workflow-desc-input')
+      const name = nameInput?.value?.trim()
+      const description = descInput?.value?.trim()
+
+      if (!name) {
+        window.$message?.error('请输入工作流名称')
+        return false
+      }
+
+      await saveWorkflow(name, description)
+    },
+  })
+}
+
+// 保存工作流
+async function saveWorkflow(name, description) {
+  try {
+    const workflow = {
+      id: currentWorkflow.value.id,
+      name,
+      description,
+      nodes: nodes.value,
+      edges: edges.value,
+      version: 1,
+    }
+
+    const id = await workflowStorage.saveWorkflow(workflow)
+
+    currentWorkflow.value = {
+      id: id || currentWorkflow.value.id,
+      name,
+      description,
+    }
+
+    window.$message?.success('工作流已保存')
+  }
+  catch (error) {
+    console.error('[Workflow] 保存失败:', error)
+    window.$message?.error('保存失败')
+  }
+}
+
+// 加载已保存的工作流
+function loadSavedWorkflow(workflow) {
+  if (!workflow || !workflow.nodes || !workflow.edges) {
+    window.$message?.error('无效的工作流数据')
+    return
+  }
+
+  // 确认是否替换当前工作流
+  if (nodes.value.length > 3 || edges.value.length > 2) {
+    window.$dialog?.warning({
+      title: '确认加载工作流',
+      content: '加载工作流将替换当前内容，是否继续？',
+      positiveText: '确定',
+      negativeText: '取消',
+      onPositiveClick: () => {
+        applyWorkflow(workflow)
+      },
+    })
+  }
+  else {
+    applyWorkflow(workflow)
+  }
+}
+
+// 应用工作流到画布
+function applyWorkflow(workflow) {
+  nodes.value = workflow.nodes
+  edges.value = workflow.edges
+
+  currentWorkflow.value = {
+    id: workflow.id,
+    name: workflow.name,
+    description: workflow.description,
+  }
+
+  // 更新 ID 种子
+  const maxId = Math.max(...nodes.value.map(n => Number.parseInt(n.id) || 0))
+  idSeed.value = maxId + 1
+
+  // 适配视图
+  nextTick(() => {
+    handleFit()
+  })
+
+  window.$message?.success(`已加载工作流：${workflow.name}`)
+}
+
+// 保存执行历史
+async function saveExecutionHistory(result) {
+  try {
+    const history = {
+      workflowId: currentWorkflow.value.id,
+      workflowName: currentWorkflow.value.name,
+      status: result.success ? 'success' : 'failed',
+      duration: result.logs.reduce((sum, log) => sum + (log.duration || 0), 0),
+      logs: result.logs,
+      nodeCount: nodes.value.length,
+      edgeCount: edges.value.length,
+    }
+
+    await workflowStorage.saveHistory(history)
+    console.log('[Workflow] 执行历史已保存')
+  }
+  catch (error) {
+    console.error('[Workflow] 保存执行历史失败:', error)
+  }
+}
+
+// 查看历史记录
+function viewHistory(history) {
+  if (!history || !history.logs) {
+    window.$message?.error('无效的历史记录')
+    return
+  }
+
+  executionLogs.value = history.logs
+  logsOpen.value = true
+}
+
 // 快捷键
 useEventListener(window, 'keydown', (e) => {
   if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'r') {
     e.preventDefault()
     runWorkflow()
+  }
+  if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's') {
+    e.preventDefault()
+    showSaveDialog()
   }
   if (e.key === 'Delete' && selectedNode.value) {
     deleteNode()

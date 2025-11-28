@@ -464,6 +464,234 @@ export const WORKFLOW_TEMPLATES = [
     },
   },
   {
+    id: 'ocr-document-processor',
+    name: 'OCR 文档处理器',
+    description: '智能识别图片中的文字,自动整理并生成结构化文档',
+    category: 'automation',
+    icon: 'ri-scan-line',
+    workflow: {
+      nodes: [
+        {
+          id: 'input-1',
+          type: 'input',
+          position: { x: 100, y: 100 },
+          data: {
+            label: '图片输入',
+            params: {
+              defaultValue: 'https://example.com/document.jpg',
+            },
+          },
+        },
+        {
+          id: 'ocr-1',
+          type: 'ocr',
+          position: { x: 100, y: 250 },
+          data: {
+            label: 'OCR 文字识别',
+            params: {
+              provider: 'qwen',
+              language: 'auto',
+              outputFormat: 'text',
+            },
+          },
+        },
+        {
+          id: 'llm-1',
+          type: 'llm',
+          position: { x: 100, y: 400 },
+          data: {
+            label: '内容整理优化',
+            params: {
+              provider: 'deepseek',
+              model: 'deepseek-chat',
+              systemPrompt: `你是文档整理专家。请对识别的文字进行：
+1. 纠正识别错误
+2. 调整格式和排版
+3. 补充标点符号
+4. 分段优化
+5. 生成摘要
+
+输出格式化的Markdown文档。`,
+              temperature: 0.3,
+            },
+          },
+        },
+        {
+          id: 'llm-2',
+          type: 'llm',
+          position: { x: 400, y: 400 },
+          data: {
+            label: '提取关键信息',
+            params: {
+              provider: 'qwen',
+              model: 'qwen-plus',
+              systemPrompt: `从文档中提取关键信息：
+- 主题
+- 关键人物/机构
+- 重要日期
+- 数字数据
+- 待办事项
+
+以JSON格式输出。`,
+              temperature: 0.2,
+            },
+          },
+        },
+        {
+          id: 'merge-1',
+          type: 'merge',
+          position: { x: 250, y: 550 },
+          data: {
+            label: '合并结果',
+            params: {
+              method: 'json',
+            },
+          },
+        },
+        {
+          id: 'output-1',
+          type: 'output',
+          position: { x: 250, y: 700 },
+          data: {
+            label: '输出结构化文档',
+          },
+        },
+      ],
+      edges: [
+        { id: 'e1', source: 'input-1', target: 'ocr-1' },
+        { id: 'e2', source: 'ocr-1', target: 'llm-1' },
+        { id: 'e3', source: 'ocr-1', target: 'llm-2' },
+        { id: 'e4', source: 'llm-1', target: 'merge-1' },
+        { id: 'e5', source: 'llm-2', target: 'merge-1' },
+        { id: 'e6', source: 'merge-1', target: 'output-1' },
+      ],
+    },
+  },
+  {
+    id: 'vision-image-analyzer',
+    name: 'AI 图片智能分析',
+    description: '使用 Vision 模型深度分析图片,生成详细报告',
+    category: 'content',
+    icon: 'ri-eye-line',
+    workflow: {
+      nodes: [
+        {
+          id: 'input-1',
+          type: 'input',
+          position: { x: 100, y: 100 },
+          data: {
+            label: '图片URL',
+            params: {
+              defaultValue: 'https://example.com/image.jpg',
+            },
+          },
+        },
+        {
+          id: 'vision-1',
+          type: 'vision',
+          position: { x: 100, y: 250 },
+          data: {
+            label: '基础场景识别',
+            params: {
+              provider: 'openai',
+              model: 'gpt-4o',
+              prompt: '请详细描述这张图片：场景、主体、色彩、构图、氛围等。',
+              temperature: 0.7,
+            },
+          },
+        },
+        {
+          id: 'vision-2',
+          type: 'vision',
+          position: { x: 350, y: 250 },
+          data: {
+            label: '细节分析',
+            params: {
+              provider: 'zhipu',
+              model: 'glm-4v',
+              prompt: '分析图片中的细节元素：物体、人物、文字、标志等。',
+              temperature: 0.5,
+            },
+          },
+        },
+        {
+          id: 'vision-3',
+          type: 'vision',
+          position: { x: 225, y: 400 },
+          data: {
+            label: '情感分析',
+            params: {
+              provider: 'qwen',
+              model: 'qwen-vl-plus',
+              prompt: '分析图片传达的情感、意图和可能的用途场景。',
+              temperature: 0.6,
+            },
+          },
+        },
+        {
+          id: 'merge-1',
+          type: 'merge',
+          position: { x: 225, y: 550 },
+          data: {
+            label: '汇总分析结果',
+            params: {
+              method: 'concat',
+              separator: '\n\n---\n\n',
+            },
+          },
+        },
+        {
+          id: 'llm-1',
+          type: 'llm',
+          position: { x: 225, y: 700 },
+          data: {
+            label: '生成分析报告',
+            params: {
+              provider: 'deepseek',
+              model: 'deepseek-chat',
+              systemPrompt: `你是图片分析专家。基于多个AI的分析结果,生成一份专业的图片分析报告：
+
+# 图片分析报告
+
+## 1. 整体概述
+[综合描述]
+
+## 2. 视觉元素
+[详细元素分析]
+
+## 3. 情感与氛围
+[情感分析]
+
+## 4. 应用建议
+[适用场景和用途]
+
+用Markdown格式输出。`,
+              temperature: 0.7,
+            },
+          },
+        },
+        {
+          id: 'output-1',
+          type: 'output',
+          position: { x: 225, y: 850 },
+          data: {
+            label: '输出分析报告',
+          },
+        },
+      ],
+      edges: [
+        { id: 'e1', source: 'input-1', target: 'vision-1' },
+        { id: 'e2', source: 'input-1', target: 'vision-2' },
+        { id: 'e3', source: 'input-1', target: 'vision-3' },
+        { id: 'e4', source: 'vision-1', target: 'merge-1' },
+        { id: 'e5', source: 'vision-2', target: 'merge-1' },
+        { id: 'e6', source: 'vision-3', target: 'merge-1' },
+        { id: 'e7', source: 'merge-1', target: 'llm-1' },
+        { id: 'e8', source: 'llm-1', target: 'output-1' },
+      ],
+    },
+  },
+  {
     id: 'brand-vi-generator',
     name: '品牌VI生成器',
     description: '根据品牌理念生成Logo设计和配色方案',
@@ -639,4 +867,3 @@ export const TEMPLATE_CATEGORIES = [
   { value: 'automation', label: '自动化', icon: 'ri-flashlight-line' },
   { value: 'design', label: '设计生成', icon: 'ri-palette-line' },
 ]
-

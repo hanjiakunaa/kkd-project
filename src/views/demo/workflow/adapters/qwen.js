@@ -31,16 +31,24 @@ export class QwenAdapter extends BaseAdapter {
       },
     }
 
-    const response = await this._proxyRequest(url, {
+    // 直接调用 API
+    const response = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${this.apiKey}`,
+        'X-DashScope-SSE': 'disable',
       },
-      body: payload,
+      body: JSON.stringify(payload),
     })
 
-    return response.data?.output?.choices?.[0]?.message?.content || ''
+    if (!response.ok) {
+      const errorText = await response.text()
+      throw new Error(`通义 API 错误 ${response.status}: ${errorText}`)
+    }
+
+    const data = await response.json()
+    return data.output?.choices?.[0]?.message?.content || ''
   }
 
   /**
