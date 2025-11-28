@@ -38,8 +38,10 @@
     }
   },
   "env": {
-    "NODE_VERSION": "18.x"
+    "NODE_VERSION": "20.x"
   },
+  "installCommand": "pnpm install",
+  "buildCommand": "pnpm run vercel-build",
   "headers": [
     {
       "source": "/api/(.*)",
