@@ -1,3 +1,5 @@
+import { handleAIRequest } from './providers/index.js'
+
 export default async function handler(req, res) {
   // 处理 CORS
   res.setHeader('Access-Control-Allow-Credentials', true)
@@ -19,10 +21,33 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { url, method = 'POST', headers = {}, body } = req.body
+    const { provider, url, method = 'POST', headers = {}, body } = req.body
 
+    // 新的模式：通过 provider 参数使用服务端 API Key
+    if (provider) {
+      try {
+        const result = await handleAIRequest(provider, body)
+        res.status(200).json({
+          code: 200,
+          message: 'Success',
+          data: result,
+        })
+        return
+      }
+      catch (error) {
+        console.error(`${provider} API Error:`, error)
+        res.status(200).json({
+          code: 500,
+          message: error.message,
+          data: null,
+        })
+        return
+      }
+    }
+
+    // 兼容旧模式：直接代理请求
     if (!url) {
-      res.status(400).json({ error: 'Missing "url" in request body' })
+      res.status(400).json({ error: 'Missing "url" or "provider" in request body' })
       return
     }
 

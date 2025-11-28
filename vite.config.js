@@ -54,6 +54,12 @@ export default defineConfig(({ mode }) => {
           changeOrigin: true,
           rewrite: path => path.replace(/^\/api/, ''),
           secure: false,
+          // 跳过 /api/proxy 路径，让它走自定义中间件
+          bypass: (req, res, options) => {
+            if (req.url?.startsWith('/api/proxy')) {
+              return req.url // 返回原始路径，跳过代理
+            }
+          },
           configure: (proxy, options) => {
             // 配置此项可在响应头中看到请求的真实地址
             proxy.on('proxyRes', (proxyRes, req) => {
