@@ -8,7 +8,9 @@ import {
   BiPersonVideo2, // video icon
   BiPostage,
   BiTable,
+  BiViewList,
   FaBookmark, // 书签
+  FaBrain,
   FaCompress, // 退出全屏
   FaExchangeAlt, // 切换
   FaExpand, // 全屏
@@ -32,32 +34,61 @@ import {
   FcHome, // 首页
   FcSearch,
   FcWorkflow,
+  HiSaveAs,
   HiSolidViewList,
+  HiTemplate,
   LaBlogger,
   LaSearchMinusSolid,
   LaSearchPlusSolid,
   MdClose,
+  MdLoop,
   MdMorevert,
   PiGastly, // logo
   PrCloudUpload, // 云上传
   PxPixelarticons,
+  SiOpenai,
   ViFileTypeAppsemble,
   ViFileTypeExcel, // excel
   ViFileTypePdf2, // prd
   ViFileTypeVscode,
   ViFileTypeWord, // word icon
+
 } from 'oh-vue-icons/icons'
 import {
+  RiAddCircleLine,
   RiAppsLine,
+  RiCloudLine,
+  RiCodeBoxLine,
+  RiComputerLine,
+  RiDatabaseLine,
+  RiDeleteBinLine,
+  RiDownloadLine,
+  RiEditLine,
+  RiFileLine,
+  RiFilmLine,
+  RiFocusLine,
   RiFolderLine,
   RiFullscreenExitLine,
   RiGitBranchLine,
+  RiGlobalLine,
+  RiImageLine,
   RiLoginCircleLine,
   RiLogoutCircleLine,
+  RiMergeCellsHorizontal,
+  RiMoonLine,
+  RiPlayCircleLine,
+  RiQqLine,
   RiRobotLine,
+  RiScanLine,
   RiSearchLine,
   RiSettings3Line,
+  RiStarLine,
+  RiText,
   RiToolsLine,
+  RiUploadLine,
+  RiVideoLine,
+  RiVolumeUpLine,
+
 } from 'oh-vue-icons/icons/ri'
 
 addIcons(
@@ -106,19 +137,47 @@ addIcons(
   FaRegularKeyboard,
   FcWorkflow,
   // Workflow page specific icons (Remix)
+  RiAddCircleLine,
+  RiAppsLine,
+  FaBrain,
+  RiCloudLine,
+  RiCodeBoxLine,
+  RiComputerLine,
+  RiDatabaseLine,
+  RiDeleteBinLine,
+  RiDownloadLine,
+  RiEditLine,
+  RiFileLine,
+  RiFilmLine,
+  RiFocusLine,
+  RiFolderLine,
+  RiFullscreenExitLine,
+  RiGitBranchLine,
+  RiGlobalLine,
+  RiImageLine,
   RiLoginCircleLine,
   RiLogoutCircleLine,
+  MdLoop,
+  RiMergeCellsHorizontal,
+  RiMoonLine,
+  RiPlayCircleLine,
+  RiQqLine,
   RiRobotLine,
-  RiToolsLine,
-  RiGitBranchLine,
-  RiAppsLine,
-  RiFullscreenExitLine,
-  RiFolderLine,
-  BiTable,
-  RiSettings3Line,
-  BiPersonVideo2,
+  RiScanLine,
   RiSearchLine,
-
+  RiSettings3Line,
+  RiStarLine,
+  RiText,
+  RiToolsLine,
+  RiUploadLine,
+  RiVideoLine,
+  RiVolumeUpLine,
+  BiTable,
+  BiPersonVideo2,
+  BiViewList,
+  SiOpenai,
+  HiTemplate,
+  HiSaveAs,
 )
 
 export const conponentIconPlugins = {

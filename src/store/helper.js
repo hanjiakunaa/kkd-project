@@ -271,7 +271,7 @@ export async function getPermissions() {
           name: '工作流',
           type: 'MENU',
           path: '/demo/workflow',
-          component: '/src/views/demo/workflow/index.vue',
+          component: '/src/views/demo/workflow/index-v2.vue',
           icon: 'fc-workflow',
           layout: 'empty',
           order: 8,
