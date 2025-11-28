@@ -40,8 +40,6 @@
   "env": {
     "NODE_VERSION": "20.x"
   },
-  "installCommand": "pnpm install",
-  "buildCommand": "pnpm run build",
   "headers": [
     {
       "source": "/api/(.*)",
