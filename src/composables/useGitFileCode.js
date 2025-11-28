@@ -20,7 +20,9 @@ const LANGUAGE_MAP = {
 // 通过 Vite 预打包源码，保证在构建产物中也可读取
 const RAW_FILE_LOADERS = (() => {
   const modules = import.meta.glob('../views/**/*.{vue,js,ts,jsx,tsx,md,markdown,json,html,css,scss,sass,less}', {
-    as: 'raw',
+    // as: 'raw',
+    query: '?raw',
+    import: 'default',
   })
 
   return Object.fromEntries(

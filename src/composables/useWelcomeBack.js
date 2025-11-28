@@ -20,8 +20,8 @@ export function useWelcomeBack() {
       // 回来状态：检查离开时长
       if (leaveTime.value > 0) {
         const timeSinceLeft = Date.now() - leaveTime.value
-        // 将阈值调整为 2秒 (2000ms)，方便测试
-        if (timeSinceLeft > 2000) {
+        // 将阈值调整为 3.5秒 (3500ms)，方便测试
+        if (timeSinceLeft > 3500) {
           window.$notificationBottomLeft?.success({
             content: '欢迎回来 👋',
             meta: '很高兴再次见到你',
