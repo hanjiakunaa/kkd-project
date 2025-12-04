@@ -12,6 +12,19 @@ import '@/styles/reset.css'
 import '@/styles/global.css'
 import 'uno.css'
 
+// 抑制开发环境中的 aria-hidden 可访问性警告（来自 Naive UI 组件）
+if (import.meta.env.DEV) {
+  const originalWarn = console.warn
+  console.warn = (...args) => {
+    const message = args[0]
+    // 过滤 aria-hidden 相关的可访问性警告
+    if (typeof message === 'string' && message.includes('aria-hidden')) {
+      return
+    }
+    originalWarn.apply(console, args)
+  }
+}
+
 async function bootstrap() {
   const app = createApp(App)
 

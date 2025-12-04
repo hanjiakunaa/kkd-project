@@ -9,6 +9,8 @@ import {
   BiPostage,
   BiTable,
   BiViewList,
+  CoCopy,
+  FaAutoprefixer,
   FaBookmark, // 书签
   FaBrain,
   FaCompress, // 退出全屏
@@ -34,6 +36,7 @@ import {
   FcHome, // 首页
   FcSearch,
   FcWorkflow,
+  GiQuillInk,
   HiSaveAs,
   HiSolidViewList,
   HiTemplate,
@@ -46,6 +49,7 @@ import {
   PiGastly, // logo
   PrCloudUpload, // 云上传
   PxPixelarticons,
+  RiPaletteLine,
   SiOpenai,
   ViFileTypeAppsemble,
   ViFileTypeExcel, // excel
@@ -178,6 +182,10 @@ addIcons(
   SiOpenai,
   HiTemplate,
   HiSaveAs,
+  CoCopy,
+  GiQuillInk,
+  FaAutoprefixer,
+  RiPaletteLine,
 )
 
 export const conponentIconPlugins = {

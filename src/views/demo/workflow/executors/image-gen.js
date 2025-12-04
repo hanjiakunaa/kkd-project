@@ -45,17 +45,26 @@ export class ImageGenExecutor extends BaseExecutor {
 
     const imageUrl = await adapter.generateImage(prompt, options)
 
+    // 调试：查看图片URL
+    console.warn('[图片生成] 适配器返回的URL:', imageUrl)
+    console.warn('[图片生成] URL类型:', typeof imageUrl)
+
     if (!imageUrl) {
       throw new Error('图片生成失败，未返回 URL')
     }
 
     // 返回 Markdown 格式
-    return {
+    const result = {
       type: 'image',
       url: imageUrl,
       prompt,
       markdown: `![${prompt}](${imageUrl})`,
     }
+    
+    console.warn('[图片生成] 返回的对象:', result)
+    console.warn('[图片生成] Markdown格式:', result.markdown)
+    
+    return result
   }
 
   /**

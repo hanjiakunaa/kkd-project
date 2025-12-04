@@ -35,7 +35,7 @@
           >
             <div class="card-header">
               <div class="card-icon">
-                <h-icon :name="template.icon" :size="32" />
+                <!-- <h-icon :name="template.icon" :size="32" /> -->
               </div>
               <div class="card-info">
                 <h3 class="card-title">

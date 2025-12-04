@@ -3,26 +3,64 @@
     <!-- 顶部工具栏 -->
     <div class="viewer-toolbar">
       <div class="toolbar-left">
-        <span>工作流操作面板</span>
+        <n-button size="small" tertiary @click="managerOpen = true">
+          <template #icon>
+            <h-icon name="ri-folder-line" />
+          </template>
+          工作流管理
+        </n-button>
         <div class="toolbar-divider" />
-        <n-button
-          v-for="nodeType in NODE_TYPES"
-          :key="nodeType.type"
-          size="small"
-          tertiary
-          :focusable="false"
-          @click="() => addNode(nodeType.type)"
-        >
-          {{ nodeType.label }}
+        <n-button size="small" tertiary @click="templateOpen = true">
+          <template #icon>
+            <h-icon name="hi-template" />
+          </template>
+          模板库
+        </n-button>
+        <div class="toolbar-divider" />
+        <n-button size="small" tertiary @click="paletteOpen = true">
+          <template #icon>
+            <h-icon name="ri-add-circle-line" />
+          </template>
+          添加节点
+        </n-button>
+        <div class="toolbar-divider" />
+        <n-button size="small" tertiary @click="handleFit">
+          <template #icon>
+            <h-icon name="bi-view-list" />
+          </template>
+          适配视图
+        </n-button>
+        <n-button size="small" tertiary :loading="isRunning" :disabled="isRunning" @click="runWorkflow">
+          <template #icon>
+            <h-icon name="ri-play-circle-line" />
+          </template>
+          {{ isRunning ? '运行中...' : '运行工作流' }}
         </n-button>
       </div>
       <div class="toolbar-right">
-        <n-button size="small" quaternary :focusable="false" @click="openSettings">
+        <n-button size="small" tertiary @click="showSaveDialog">
+          <template #icon>
+            <h-icon name="hi-save-as" />
+          </template>
+          保存工作流
+        </n-button>
+        <div class="toolbar-divider" />
+        <n-button size="small" quaternary @click="settingsOpen = true">
           <template #icon>
             <h-icon name="ri-settings-3-line" />
           </template>
         </n-button>
-        <n-button size="small" quaternary :focusable="false" @click="handleClose">
+        <n-button size="small" quaternary @click="openExport">
+          <template #icon>
+            <h-icon name="ri-download-line" />
+          </template>
+        </n-button>
+        <n-button size="small" quaternary @click="openImport">
+          <template #icon>
+            <h-icon name="ri-upload-line" />
+          </template>
+        </n-button>
+        <n-button size="small" quaternary @click="handleClose">
           <template #icon>
             <h-icon name="fa-compress" />
           </template>
@@ -54,247 +92,324 @@
       </template>
     </vue-flow>
 
-    <!-- 设置面板 -->
-    <n-drawer v-model:show="settingsOpen" placement="right" :width="360">
-      <n-drawer-content title="全局设置">
-        <n-form label-placement="top">
-          <n-form-item label="API Base URL">
-            <n-input v-model:value="globalSettings.baseUrl" placeholder="例如: https://api.openai.com/v1" />
+    <!-- 工作流管理面板 -->
+    <workflow-manager :show="managerOpen" @update:show="managerOpen = $event" @load-workflow="loadSavedWorkflow" @view-history="viewHistory" />
+
+    <!-- 模板库面板 -->
+    <template-gallery :show="templateOpen" @update:show="templateOpen = $event" @load-template="loadTemplate" />
+
+    <!-- 节点库面板 -->
+    <node-palette :show="paletteOpen" @update:show="paletteOpen = $event" @add-node="addNode" />
+
+    <!-- 服务商配置面板 -->
+    <provider-settings v-model="providerConfig" :show="settingsOpen" @update:show="settingsOpen = $event" @save="saveProviderConfig" />
+
+    <!-- 属性面板 -->
+    <n-drawer v-model:show="inspectorOpen" :width="380" placement="right">
+      <n-drawer-content title="节点属性">
+        <n-form v-if="selectedNode" label-placement="top">
+          <n-form-item label="标题">
+            <n-input v-model:value="selectedNode.data.title" />
           </n-form-item>
-          <n-form-item label="API Key">
-            <n-input v-model:value="globalSettings.apiKey" type="password" show-password-on="click" placeholder="sk-..." />
+          <n-form-item label="描述">
+            <n-input v-model:value="selectedNode.data.description" type="textarea" :rows="2" />
           </n-form-item>
-          <n-alert type="info" title="提示" class="mt-2">
-            请确保使用的 API 服务支持跨域(CORS)请求，或者使用本地代理地址。
-            如果是 OpenAI 官方接口，需要在服务端进行转发。
-          </n-alert>
+
+          <!-- LLM 节点配置 -->
+          <template v-if="selectedNode.data.type === 'llm-node'">
+            <n-form-item label="AI 服务商">
+              <n-select
+                v-model:value="selectedNode.data.params.provider"
+                :options="chatProviders"
+                @update:value="onProviderChange"
+              />
+            </n-form-item>
+            <n-form-item label="模型">
+              <n-select
+                v-model:value="selectedNode.data.params.model"
+                :options="getCurrentModels('chat')"
+              />
+            </n-form-item>
+            <n-form-item label="温度">
+              <n-slider v-model:value="selectedNode.data.params.temperature" :min="0" :max="2" :step="0.1" />
+              <span class="param-value">{{ selectedNode.data.params.temperature }}</span>
+            </n-form-item>
+            <n-form-item label="系统提示词">
+              <n-input
+                v-model:value="selectedNode.data.params.systemPrompt"
+                type="textarea"
+                :rows="3"
+                placeholder="你是一个有用的助手。"
+              />
+            </n-form-item>
+          </template>
+
+          <!-- 图片生成节点配置 -->
+          <template v-if="selectedNode.data.type === 'image-gen-node'">
+            <n-form-item label="AI 服务商">
+              <n-select
+                v-model:value="selectedNode.data.params.provider"
+                :options="imageProviders"
+                @update:value="onProviderChange"
+              />
+            </n-form-item>
+            <n-form-item label="模型">
+              <n-select
+                v-model:value="selectedNode.data.params.model"
+                :options="getCurrentModels('image')"
+              />
+            </n-form-item>
+            <n-form-item label="尺寸">
+              <n-select
+                v-model:value="selectedNode.data.params.size"
+                :options="imageSizes"
+              />
+            </n-form-item>
+          </template>
+
+          <!-- 视频生成节点配置 -->
+          <template v-if="selectedNode.data.type === 'video-gen-node'">
+            <n-form-item label="AI 服务商">
+              <n-select
+                v-model:value="selectedNode.data.params.provider"
+                :options="videoProviders"
+                @update:value="onProviderChange"
+              />
+            </n-form-item>
+            <n-form-item label="模型">
+              <n-select
+                v-model:value="selectedNode.data.params.model"
+                :options="getCurrentModels('video')"
+              />
+            </n-form-item>
+            <n-form-item label="时长 (秒)">
+              <n-input-number v-model:value="selectedNode.data.params.duration" :min="1" :max="30" />
+            </n-form-item>
+            <n-form-item label="分辨率">
+              <n-select
+                v-model:value="selectedNode.data.params.resolution"
+                :options="videoResolutions"
+              />
+            </n-form-item>
+          </template>
+
+          <!-- 只在输出节点展示AI内容和图片 -->
+          <template v-if="selectedNode.data.type === 'output-node'">
+            <!-- 收集的图片展示 -->
+            <template v-if="selectedNode.data.images && selectedNode.data.images.length > 0">
+              <n-divider style="margin: 20px 0;">
+                <n-text depth="3" style="font-size: 12px;">
+                  🖼️ 生成的图片 ({{ selectedNode.data.images.length }})
+                </n-text>
+              </n-divider>
+
+              <!-- 使用 n-image-group 支持多图预览和切换 -->
+              <n-image-group show-toolbar-tooltip>
+                <div class="images-gallery">
+                  <div
+                    v-for="(img, index) in selectedNode.data.images"
+                    :key="index"
+                    class="image-item"
+                  >
+                    <n-image
+                      :src="img.url"
+                      :alt="img.prompt || 'AI生成的图片'"
+                      object-fit="cover"
+                      show-toolbar-tooltip
+                      :img-props="{
+                        style: {
+                          width: '100%',
+                          height: '200px',
+                          borderRadius: '8px',
+                          cursor: 'zoom-in',
+                        },
+                      }"
+                      :previewed-img-props="{
+                        style: {
+                          maxWidth: '90vw',
+                          maxHeight: '90vh',
+                        },
+                      }"
+                    />
+                    <div class="image-actions">
+                      <n-button size="tiny" quaternary @click.stop="copyOutput(img.url)">
+                        <template #icon>
+                          <h-icon name="co-copy" />
+                        </template>
+                      </n-button>
+                    </div>
+                    <div v-if="img.prompt" class="image-title">
+                      {{ img.prompt }}
+                    </div>
+                  </div>
+                </div>
+              </n-image-group>
+
+              <n-text depth="3" style="font-size: 11px; display: block; text-align: center; margin-top: 8px;">
+                💡 点击图片可放大预览，支持左右切换
+              </n-text>
+            </template>
+
+            <!-- AI文本内容展示 -->
+            <template v-if="selectedNode.data.variables?.output">
+              <n-divider style="margin: 20px 0;">
+                <n-text depth="3" style="font-size: 12px;">
+                  📝 AI 生成内容
+                </n-text>
+              </n-divider>
+
+              <div class="ai-output-section">
+                <div class="output-content-box">
+                  <n-scrollbar style="max-height: 500px;">
+                    <div class="output-text">
+                      {{ selectedNode.data.variables.output }}
+                    </div>
+                  </n-scrollbar>
+                </div>
+
+                <!-- 操作按钮 -->
+                <div class="output-actions">
+                  <n-space justify="space-between" style="width: 100%;">
+                    <n-space>
+                      <n-button size="small" @click="copyOutput(selectedNode.data.variables.output)">
+                        <template #icon>
+                          <h-icon name="co-copy" />
+                        </template>
+                        复制
+                      </n-button>
+                      <n-button size="small" quaternary @click="clearOutput(selectedNode.id)">
+                        <template #icon>
+                          <h-icon name="ri-delete-bin-line" />
+                        </template>
+                        清除
+                      </n-button>
+                    </n-space>
+                    <n-tag size="small" :bordered="false">
+                      {{ selectedNode.data.variables.output.length }} 字符
+                    </n-tag>
+                  </n-space>
+                </div>
+              </div>
+            </template>
+
+            <!-- 无内容提示 -->
+            <template v-if="!selectedNode.data.images?.length && !selectedNode.data.variables?.output">
+              <n-empty description="运行工作流后，结果将在这里展示" style="margin: 40px 0;">
+                <template #icon>
+                  <h-icon name="ri-inbox-line" style="font-size: 48px; color: #ccc;" />
+                </template>
+              </n-empty>
+            </template>
+          </template>
+
+          <!-- 删除节点按钮 -->
+          <n-button type="error" block style="margin-top: 16px;" @click="deleteNode">
+            <template #icon>
+              <h-icon name="ri-delete-bin-line" />
+            </template>
+            删除节点
+          </n-button>
         </n-form>
+      </n-drawer-content>
+    </n-drawer>
+
+    <!-- 导入导出面板 -->
+    <n-drawer v-model:show="exportOpen" :height="280" placement="bottom">
+      <n-drawer-content title="导出工作流">
+        <n-input v-model:value="exportText" type="textarea" :rows="8" readonly />
         <template #footer>
-          <n-button type="primary" @click="saveSettings">
-            保存配置
+          <n-button @click="copyExportText">
+            复制到剪贴板
           </n-button>
         </template>
       </n-drawer-content>
     </n-drawer>
 
-    <!-- 属性面板 -->
-    <n-drawer v-model:show="inspectorOpen" placement="right" :width="360">
-      <n-drawer-content title="属性">
-        <!-- 节点属性 -->
-        <n-form v-if="selectedType === 'node' && selectedNode" label-placement="left">
-          <n-form-item label="标题">
-            <n-input v-model:value="selectedNode.data.title" />
-          </n-form-item>
-          <n-form-item label="描述">
-            <n-input v-model:value="selectedNode.data.description" type="textarea" />
-          </n-form-item>
-          <template v-if="selectedNode.data.type === 'llm-node'">
-            <n-form-item label="模型">
-              <n-input v-model:value="selectedNode.data.params.model" />
-            </n-form-item>
-            <n-form-item label="温度">
-              <n-input v-model:value="selectedNode.data.params.temperature" />
-            </n-form-item>
-          </template>
-          <template v-if="selectedNode.data.type === 'image-gen-node'">
-            <n-form-item label="尺寸">
-              <n-select
-                v-model:value="selectedNode.data.params.size"
-                :options="[
-                  { label: '1024x1024', value: '1024x1024' },
-                  { label: '512x512', value: '512x512' },
-                  { label: '256x256', value: '256x256' },
-                ]"
-              />
-            </n-form-item>
-            <n-form-item label="风格">
-              <n-select
-                v-model:value="selectedNode.data.params.style"
-                :options="[
-                  { label: '自然 (Natural)', value: 'natural' },
-                  { label: '鲜艳 (Vivid)', value: 'vivid' },
-                ]"
-              />
-            </n-form-item>
-          </template>
-        </n-form>
-
-        <!-- 变量管理 -->
-        <template v-if="selectedType === 'node' && selectedNode">
-          <div class="mt-2">
-            变量
-          </div>
-          <div>
-            <div v-for="(v, k) in selectedNode.data.variables || {}" :key="k" class="var-row">
-              <span class="var-key">{{ k }}</span>
-              <n-input v-model:value="selectedNode.data.variables[k]" class="var-input" />
-              <n-button size="small" tertiary @click="removeVariable(k)">
-                删除
-              </n-button>
-            </div>
-            <div class="var-row">
-              <n-input v-model:value="newVarKey" class="var-input" placeholder="变量名" />
-              <n-input v-model:value="newVarValue" class="var-input" placeholder="变量值" />
-              <n-button size="small" secondary @click="addVariable">
-                添加
-              </n-button>
-            </div>
-          </div>
+    <n-drawer v-model:show="importOpen" :height="280" placement="bottom">
+      <n-drawer-content title="导入工作流">
+        <n-input v-model:value="importText" type="textarea" :rows="8" placeholder="粘贴工作流 JSON..." />
+        <template #footer>
+          <n-button type="primary" @click="applyImport">
+            导入
+          </n-button>
         </template>
-
-        <!-- 工作组管理 -->
-        <template v-if="selectedType === 'node' && selectedNode && selectedNode.data?.type === 'group-node'">
-          <n-form-item label="组内添加节点">
-            <n-space>
-              <n-button
-                v-for="nodeType in NODE_TYPES.filter(t => t.type !== 'group-node')"
-                :key="nodeType.type"
-                size="small"
-                tertiary
-                :disabled="groupChildCount >= 2"
-                @click="() => addNodeToGroup(nodeType.type)"
-              >
-                {{ nodeType.label }}
-              </n-button>
-            </n-space>
-          </n-form-item>
-          <div v-if="groupChildCount >= 2" style="font-size:12px;color:#9ca3af;">
-            该工作组最多只能添加两个子节点
-          </div>
-          <n-form-item>
-            <n-button size="small" @click="() => alignGroup(selectedNode.id)">
-              对齐组内
-            </n-button>
-          </n-form-item>
-        </template>
-
-        <!-- 连线属性 -->
-        <n-form v-else-if="selectedType === 'edge' && selectedEdge" label-placement="left">
-          <n-form-item label="标签">
-            <n-input v-model:value="selectedEdge.data.label" />
-          </n-form-item>
-          <n-form-item label="状态">
-            <n-select v-model:value="selectedEdge.data.status" :options="EDGE_STATUS_OPTIONS" />
-          </n-form-item>
-        </n-form>
       </n-drawer-content>
     </n-drawer>
 
-    <!-- 导出面板 -->
-    <n-drawer v-model:show="exportOpen" placement="right" :height="280">
-      <n-drawer-content title="导出 JSON">
-        <n-input v-model:value="exportText" type="textarea" />
+    <!-- 执行日志面板 -->
+    <n-drawer v-model:show="logsOpen" :width="480" placement="right">
+      <n-drawer-content title="执行日志">
+        <n-timeline>
+          <n-timeline-item
+            v-for="log in executionLogs"
+            :key="log.id"
+            :type="log.error ? 'error' : 'success'"
+            :title="`${log.title} (${log.type})`"
+            :time="log.startTime"
+          >
+            <div class="log-content">
+              <div v-if="log.params" class="log-params">
+                <strong>参数:</strong> {{ JSON.stringify(log.params) }}
+              </div>
+              <div class="log-input">
+                <strong>输入:</strong> {{ truncate(String(log.input), 100) }}
+              </div>
+              <div v-if="log.output" class="log-output">
+                <strong>输出:</strong> {{ truncate(String(log.output), 100) }}
+              </div>
+              <div v-if="log.error" class="log-error">
+                <strong>错误:</strong> {{ log.error }}
+              </div>
+              <div class="log-duration">
+                <strong>耗时:</strong> {{ log.duration }}ms
+              </div>
+            </div>
+          </n-timeline-item>
+        </n-timeline>
       </n-drawer-content>
     </n-drawer>
-
-    <!-- 导入面板 -->
-    <n-drawer v-model:show="importOpen" placement="right" :height="280">
-      <n-drawer-content title="导入 JSON">
-        <n-input v-model:value="importText" type="textarea" />
-        <n-button class="mt-2" @click="applyImport">
-          应用
-        </n-button>
-      </n-drawer-content>
-    </n-drawer>
-
-    <!-- 浮动操作按钮 -->
-    <div class="actions-floating">
-      <n-button size="small" @click="handleFit">
-        适配视图
-      </n-button>
-      <n-button size="small" :loading="isRunning" @click="openDebug">
-        {{ isRunning ? '运行中...' : '运行并生成MD' }}
-      </n-button>
-      <n-button size="small" @click="resetStatus">
-        重置状态
-      </n-button>
-      <n-button size="small" @click="openExport">
-        导出
-      </n-button>
-      <n-button size="small" @click="openImport">
-        导入
-      </n-button>
-    </div>
   </div>
 </template>
 
 <script setup>
 import { Background } from '@vue-flow/background'
 import { VueFlow } from '@vue-flow/core'
-import { useEventListener, useThrottleFn } from '@vueuse/core'
-import { nextTick } from 'vue'
-import api from './api'
+import { useEventListener } from '@vueuse/core'
+import NodePalette from './components/NodePalette.vue'
+import ProviderSettings from './components/ProviderSettings.vue'
 import SpecialEdge from './components/SpecialEdge.vue'
 import SpecialNode from './components/SpecialNode.vue'
+import TemplateGallery from './components/TemplateGallery.vue'
+import WorkflowManager from './components/WorkflowManager.vue'
+import { getModels } from './config/models'
+import { getNodeConfig } from './config/node-types'
+import { AI_PROVIDERS, getProvidersByCapability } from './config/providers'
+import { WorkflowExecutor } from './engine/executor'
+import { workflowStorage } from './utils/storage'
 
 const router = useRouter()
 
-// ==================== 常量定义 ====================
-const SCHEMA_VERSION = 1
-const SPACING = 260
-const BASE_Y = 180
-
-const NODE_TYPES = [
-  { type: 'input-node', label: '输入', icon: 'ri-login-circle-line' },
-  { type: 'llm-node', label: 'LLM', icon: 'ri-robot-line', params: { model: 'gpt-4o-mini', temperature: '0.7' } },
-  { type: 'image-gen-node', label: '绘图', icon: 'ri-image-line', params: { size: '1024x1024', style: 'natural' } },
-  { type: 'tool-node', label: '工具', icon: 'ri-tools-line' },
-  { type: 'branch-node', label: '分支', icon: 'ri-git-branch-line' },
-  { type: 'group-node', label: '工作组', icon: 'ri-folder-line' },
-  { type: 'output-node', label: '输出', icon: 'ri-logout-circle-line' },
-]
-
-const EDGE_STATUS_OPTIONS = [
-  { label: '默认', value: 'default' },
-  { label: '运行中', value: 'running' },
-  { label: '成功', value: 'success' },
-  { label: '错误', value: 'error' },
-  { label: '跳过', value: 'skipped' },
-]
-
-// ==================== 响应式状态 ====================
-// 画布相关
+// ==================== 状态管理 ====================
 const vueFlowInstance = ref(null)
-const idSeed = ref(5)
+const idSeed = ref(4)
 const nodes = ref([
   {
     id: '1',
     type: 'special',
     position: { x: 120, y: 180 },
-    data: {
-      title: '输入',
-      icon: 'ri-login-circle-line',
-      type: 'input-node',
-      status: 'ready',
-      params: { schema: 'text' },
-      description: '工作流输入',
-    },
+    data: getNodeConfig('input-node'),
   },
   {
     id: '2',
     type: 'special',
     position: { x: 380, y: 180 },
-    data: {
-      title: 'LLM',
-      icon: 'ri-robot-line',
-      type: 'llm-node',
-      status: 'ready',
-      params: { model: 'gpt-4o-mini', temperature: '0.7' },
-      description: '文本生成',
-    },
+    data: getNodeConfig('llm-node'),
   },
   {
     id: '3',
     type: 'special',
     position: { x: 640, y: 180 },
-    data: {
-      title: '输出',
-      icon: 'ri-logout-circle-line',
-      type: 'output-node',
-      status: 'ready',
-      params: {},
-      description: '工作流输出',
-    },
+    data: getNodeConfig('output-node'),
   },
 ])
 
@@ -306,7 +421,7 @@ const edges = ref([
     target: '2',
     sourceHandle: 'out',
     targetHandle: 'in',
-    data: { label: '处理', status: 'default' },
+    data: { label: '', status: 'default' },
   },
   {
     id: 'e2->3',
@@ -315,74 +430,145 @@ const edges = ref([
     target: '3',
     sourceHandle: 'out',
     targetHandle: 'in',
-    data: { label: '结果', status: 'default' },
+    data: { label: '', status: 'default' },
   },
 ])
 
-// 属性面板相关
-const inspectorOpen = ref(false)
-const selectedType = ref('node')
-const selectedNodeId = ref(null)
-const selectedEdgeId = ref(null)
-const newVarKey = ref('')
-const newVarValue = ref('')
-
-// 导入导出
-const exportOpen = ref(false)
-const exportText = ref('')
-const importOpen = ref(false)
-const importText = ref('')
-
-// 全局设置
+// 面板状态
+const managerOpen = ref(false)
+const templateOpen = ref(false)
+const paletteOpen = ref(false)
 const settingsOpen = ref(false)
-const globalSettings = ref({
-  baseUrl: localStorage.getItem('wf_base_url') || 'https://api.openai.com/v1',
-  apiKey: localStorage.getItem('wf_api_key') || '',
+const inspectorOpen = ref(false)
+const exportOpen = ref(false)
+const importOpen = ref(false)
+const logsOpen = ref(false)
+
+// 当前工作流信息
+const currentWorkflow = ref({
+  id: null,
+  name: '未命名工作流',
+  description: '',
 })
 
-// ==================== 计算属性 ====================
+// 选中的节点/边
+const selectedNodeId = ref(null)
 const selectedNode = computed(() => nodes.value.find(n => n.id === selectedNodeId.value))
-const selectedEdge = computed(() => edges.value.find(e => e.id === selectedEdgeId.value))
-const groupChildCount = computed(() => {
-  if (!(selectedNode.value && selectedNode.value.data?.type === 'group-node'))
-    return 0
-  return nodes.value.filter(n => n.parentNode === selectedNode.value.id).length
+
+// 执行状态
+const isRunning = ref(false)
+const executionLogs = ref([])
+const executor = new WorkflowExecutor()
+
+// 服务商配置
+const providerConfig = ref({
+  apiKeys: {},
+  baseUrls: {},
 })
 
-// ==================== 工具函数 ====================
-const throttledFit = useThrottleFn(() => {
-  vueFlowInstance.value?.fitView()
-}, 200)
+// 从 localStorage 加载配置
+function loadProviderConfig() {
+  const apiKeys = {}
+  const baseUrls = {}
 
-function getNodeConfig(type) {
-  const nodeType = NODE_TYPES.find(t => t.type === type)
-  return {
-    title: nodeType?.label || '节点',
-    icon: nodeType?.icon || 'ri-node-tree',
-    type,
-    status: 'ready',
-    params: nodeType?.params || {},
-    variables: {},
-    description: '',
+  Object.keys(AI_PROVIDERS).forEach((providerId) => {
+    const savedKey = localStorage.getItem(`wf_api_key_${providerId}`)
+    const savedUrl = localStorage.getItem(`wf_base_url_${providerId}`)
+
+    if (savedKey) {
+      apiKeys[providerId] = savedKey
+    }
+    if (savedUrl) {
+      baseUrls[providerId] = savedUrl
+    }
+  })
+
+  providerConfig.value = { apiKeys, baseUrls }
+
+  // 调试日志
+  const configuredProviders = Object.keys(apiKeys)
+  if (configuredProviders.length > 0) {
+    console.warn('[Workflow] 已加载配置的服务商:', configuredProviders)
+  }
+  else {
+    console.warn('[Workflow] 未找到任何服务商配置，请在设置中配置 API Key')
   }
 }
 
-function getStartNodes() {
-  return nodes.value.filter(n => n.data.type === 'input-node' && !n.parentNode).map(n => n.id)
+// 组件挂载时加载配置
+onMounted(() => {
+  loadProviderConfig()
+})
+
+// 导入导出
+const exportText = ref('')
+const importText = ref('')
+
+// ==================== 计算属性 ====================
+const chatProviders = computed(() => {
+  return getProvidersByCapability('supportsChat').map(p => ({
+    label: p.name,
+    value: p.id,
+  }))
+})
+
+const imageProviders = computed(() => {
+  return getProvidersByCapability('supportsImage').map(p => ({
+    label: p.name,
+    value: p.id,
+  }))
+})
+
+const videoProviders = computed(() => {
+  return getProvidersByCapability('supportsVideo').map(p => ({
+    label: p.name,
+    value: p.id,
+  }))
+})
+
+const imageSizes = [
+  { label: '1024x1024', value: '1024x1024' },
+  { label: '1024x1792 (竖图)', value: '1024x1792' },
+  { label: '1792x1024 (横图)', value: '1792x1024' },
+  { label: '768x1024', value: '768x1024' },
+  { label: '1024x768', value: '1024x768' },
+]
+
+const videoResolutions = [
+  { label: '720p', value: '720p' },
+  { label: '1080p', value: '1080p' },
+]
+
+// ==================== 方法 ====================
+function getCurrentModels(type) {
+  if (!selectedNode.value)
+    return []
+  const provider = selectedNode.value.data.params.provider
+  if (!provider)
+    return []
+  return getModels(provider, type).map(m => ({
+    label: m.label,
+    value: m.value,
+  }))
 }
 
-function getOutgoingEdges(nodeId) {
-  return edges.value.filter(e => e.source === nodeId)
+function onProviderChange() {
+  // 重置模型选择
+  if (selectedNode.value) {
+    const type = selectedNode.value.data.type
+    const models = getCurrentModels(
+      type === 'llm-node' ? 'chat' : type === 'image-gen-node' ? 'image' : 'video',
+    )
+    if (models.length > 0) {
+      selectedNode.value.data.params.model = models[0].value
+    }
+  }
 }
 
-// ==================== 画布操作 ====================
 function handlePaneReady(instance) {
   vueFlowInstance.value = instance
   nextTick(() => {
-    requestAnimationFrame(() => {
-      alignLinear()
-      instance.fitView()
-    })
+    instance.fitView()
   })
 }
 
@@ -397,71 +583,50 @@ function handleClose() {
 function onConnect(conn) {
   if (conn.source === conn.target)
     return
-  if ((conn.targetHandle || 'in') !== 'in')
-    return
-
-  const sourceHandle = conn.sourceHandle || 'out'
-  const targetHandle = conn.targetHandle || 'in'
-
-  const exists = edges.value.some(
-    e => e.source === conn.source && e.target === conn.target
-      && (e.sourceHandle || 'out') === sourceHandle
-      && (e.targetHandle || 'in') === targetHandle,
-  )
-
-  if (exists)
-    return
 
   edges.value.push({
     id: `e${conn.source}->${conn.target}`,
     type: 'special',
     source: conn.source,
     target: conn.target,
-    sourceHandle,
-    targetHandle,
+    sourceHandle: conn.sourceHandle || 'out',
+    targetHandle: conn.targetHandle || 'in',
     data: { label: '', status: 'default' },
   })
 }
 
-// ==================== 节点操作 ====================
+function onNodeClick({ node }) {
+  selectedNodeId.value = node.id
+  inspectorOpen.value = true
+}
+
+function onEdgeClick() {
+  // 可以添加边的属性编辑
+}
+
 function addNode(type) {
   const id = String(idSeed.value++)
-  const candidate = (selectedType.value === 'node' && selectedNode.value && !selectedNode.value.parentNode)
-    ? selectedNode.value
-    : nodes.value[nodes.value.length - 1]
-
-  const baseY = candidate?.position.y || BASE_Y
-  const defaultPos = candidate
-    ? { x: candidate.position.x + 160, y: baseY + 180 }
-    : { x: 120, y: baseY }
-
-  const groupPos = candidate
-    ? { x: candidate.position.x + 220, y: candidate.position.y + 140 }
-    : { x: defaultPos.x + 60, y: defaultPos.y + 60 }
+  const lastNode = nodes.value[nodes.value.length - 1]
+  const position = {
+    x: lastNode ? lastNode.position.x + 260 : 120,
+    y: lastNode ? lastNode.position.y : 180,
+  }
 
   const node = {
     id,
     type: 'special',
-    position: type === 'group-node' ? groupPos : defaultPos,
+    position,
     data: getNodeConfig(type),
-  }
-
-  if (type === 'group-node') {
-    node.style = {
-      width: '460px',
-      height: '300px',
-      backgroundColor: 'transparent',
-      border: '1px solid #e5e7eb',
-    }
   }
 
   nodes.value.push(node)
 
-  if (candidate) {
+  // 自动连接到最后一个节点
+  if (lastNode) {
     edges.value.push({
-      id: `e${candidate.id}->${id}`,
+      id: `e${lastNode.id}->${id}`,
       type: 'special',
-      source: candidate.id,
+      source: lastNode.id,
       target: id,
       sourceHandle: 'out',
       targetHandle: 'in',
@@ -470,443 +635,268 @@ function addNode(type) {
   }
 
   nextTick(() => {
-    alignLinear()
-    throttledFit()
+    vueFlowInstance.value?.fitView()
   })
 }
 
-function calcGroupColumns(width, margin, spacingX) {
-  const innerWidth = width - margin * 2
-  return Math.max(1, Math.floor((innerWidth + spacingX) / spacingX))
-}
-
-function addNodeToGroup(type) {
-  if (!selectedNode.value || selectedNode.value.data?.type !== 'group-node')
+// AI输出相关工具函数
+function copyOutput(text) {
+  if (!text)
     return
-
-  const groupId = selectedNode.value.id
-  const children = nodes.value.filter(n => n.parentNode === groupId)
-  if (children.length >= 2)
-    return
-
-  const id = String(idSeed.value++)
-  const group = selectedNode.value
-  const width = Number.parseInt(group?.style?.width || '460')
-  const margin = 40
-  const header = 100
-  const spacingX = 220
-  const spacingY = 160
-  const cols = calcGroupColumns(width, margin, spacingX)
-
-  const col = children.length % cols
-  const row = Math.floor(children.length / cols)
-  const pos = { x: margin + col * spacingX, y: header + margin + row * spacingY }
-
-  const node = {
-    id,
-    type: 'special',
-    position: pos,
-    parentNode: groupId,
-    extent: 'parent',
-    data: getNodeConfig(type),
-  }
-
-  nodes.value.push(node)
-
-  const lastChild = children[children.length - 1]
-  if (lastChild) {
-    edges.value.push({
-      id: `e${lastChild.id}->${id}`,
-      type: 'special',
-      source: lastChild.id,
-      target: id,
-      sourceHandle: 'out',
-      targetHandle: 'in',
-      data: { label: '', status: 'default' },
-    })
-  }
-
-  nextTick(() => {
-    alignGroup(groupId)
-    throttledFit()
+  navigator.clipboard.writeText(text).then(() => {
+    window.$message?.success('已复制到剪贴板')
+  }).catch(() => {
+    window.$message?.error('复制失败')
   })
 }
 
-function onNodeClick({ node }) {
-  selectedType.value = 'node'
-  selectedNodeId.value = node.id
-  selectedEdgeId.value = null
-  inspectorOpen.value = true
+function clearOutput(nodeId) {
+  const node = nodes.value.find(n => n.id === nodeId)
+  if (node?.data?.variables) {
+    delete node.data.variables.output
+    window.$message?.success('已清除输出')
+  }
 }
 
-function onEdgeClick({ edge }) {
-  selectedType.value = 'edge'
-  selectedEdgeId.value = edge.id
+function deleteNode() {
+  if (!selectedNode.value)
+    return
+
+  const nodeId = selectedNode.value.id
+  nodes.value = nodes.value.filter(n => n.id !== nodeId)
+  edges.value = edges.value.filter(e => e.source !== nodeId && e.target !== nodeId)
   selectedNodeId.value = null
-  inspectorOpen.value = true
+  inspectorOpen.value = false
 }
 
-// ==================== 布局对齐 ====================
+// 加载模板
+function loadTemplate(template) {
+  if (!template || !template.workflow) {
+    window.$message?.error('无效的模板数据')
+    return
+  }
+
+  // 确认是否替换当前工作流
+  if (nodes.value.length > 3 || edges.value.length > 2) {
+    window.$dialog?.warning({
+      title: '确认加载模板',
+      content: '加载模板将替换当前工作流，是否继续？',
+      positiveText: '确定',
+      negativeText: '取消',
+      onPositiveClick: () => {
+        applyTemplate(template)
+      },
+    })
+  }
+  else {
+    applyTemplate(template)
+  }
+}
+
+// 应用模板到画布
+function applyTemplate(template) {
+  const { nodes: templateNodes, edges: templateEdges } = template.workflow
+
+  // 转换节点格式
+  const newNodes = templateNodes.map((node) => {
+    // 将模板中的简化类型转换为系统类型
+    const systemType = convertTemplateTypeToSystemType(node.type)
+
+    // 获取默认配置作为基础
+    const defaultConfig = getNodeConfig(systemType) || {}
+
+    // 合并配置：优先使用模板中的配置，缺失的使用默认配置
+    const nodeData = {
+      type: systemType, // 使用系统节点类型
+      title: node.data.label || node.data.title || defaultConfig.title || '未命名节点',
+      description: node.data.description || defaultConfig.description || '',
+      icon: defaultConfig.icon || getNodeTypeIcon(node.type),
+      params: {
+        ...defaultConfig.params, // 先应用默认参数
+        ...node.data.params, // 再应用模板参数（覆盖默认值）
+      },
+      variables: node.data.variables || {},
+      status: 'idle',
+    }
+
+    return {
+      id: node.id,
+      type: 'special', // 使用统一的 special 节点类型
+      position: node.position,
+      data: nodeData,
+    }
+  })
+
+  // 转换连线格式
+  const newEdges = templateEdges.map((edge) => {
+    return {
+      id: edge.id,
+      type: 'special', // 使用统一的 special 边类型
+      source: edge.source,
+      target: edge.target,
+      sourceHandle: edge.sourceHandle || 'out',
+      targetHandle: edge.targetHandle || 'in',
+      data: edge.data || { label: '', status: 'default' },
+    }
+  })
+
+  // 替换当前工作流
+  nodes.value = newNodes
+  edges.value = newEdges
+
+  // 更新 ID 种子
+  const maxId = Math.max(...newNodes.map(n => Number.parseInt(n.id) || 0))
+  idSeed.value = maxId + 1
+
+  // 适配视图
+  nextTick(() => {
+    handleFit()
+  })
+}
+
+// 将模板类型转换为系统类型
+function convertTemplateTypeToSystemType(templateType) {
+  const typeMap = {
+    'input': 'input-node',
+    'output': 'output-node',
+    'llm': 'llm-node',
+    'image-gen': 'image-gen-node',
+    'video-gen': 'video-gen-node',
+    'audio-gen': 'audio-gen-node',
+    'text-process': 'text-process-node',
+    'merge': 'merge-node',
+    'condition': 'condition-node',
+  }
+  return typeMap[templateType] || `${templateType}-node`
+}
+
+// 获取节点类型图标
+function getNodeTypeIcon(type) {
+  const iconMap = {
+    'input': 'ri-input-method-line',
+    'output': 'ri-printer-line',
+    'llm': 'ri-robot-line',
+    'image-gen': 'ri-image-add-line',
+    'video-gen': 'ri-video-add-line',
+    'audio-gen': 'ri-mic-line',
+    'text-process': 'ri-text-wrap',
+    'merge': 'ri-merge-cells-horizontal',
+    'condition': 'ri-git-branch-line',
+  }
+  return iconMap[type] || 'ri-node-tree'
+}
+
 function alignLinear() {
-  const baseY = nodes.value.length ? nodes.value[0].position.y : BASE_Y
-  const visited = new Set()
-  const order = []
-
-  const walk = (nid) => {
-    if (visited.has(nid))
-      return
-    visited.add(nid)
-    order.push(nid)
-    getOutgoingEdges(nid).forEach(e => walk(e.target))
-  }
-
-  getStartNodes().forEach(walk)
-
-  nodes.value
-    .filter(n => !visited.has(n.id) && !n.parentNode)
-    .sort((a, b) => a.position.x - b.position.x)
-    .forEach(n => order.push(n.id))
-
-  order.forEach((id, idx) => {
-    const n = nodes.value.find(nn => nn.id === id)
-    if (!n.parentNode && n.data.type !== 'group-node') {
-      n.position = { x: 120 + idx * SPACING, y: baseY }
+  // 简单的线性布局
+  const baseY = 180
+  const spacing = 260
+  nodes.value.forEach((node, index) => {
+    if (!node.parentNode) {
+      node.position = { x: 120 + index * spacing, y: baseY }
     }
   })
 }
 
-function alignGroup(groupId) {
-  const children = nodes.value.filter(n => n.parentNode === groupId)
-  const group = nodes.value.find(n => n.id === groupId)
-  const width = Number.parseInt(group?.style?.width || '460')
-  const margin = 40
-  const header = 100
-  const spacingX = 220
-  const spacingY = 160
-  const cols = calcGroupColumns(width, margin, spacingX)
-
-  children.forEach((n, idx) => {
-    const col = idx % cols
-    const row = Math.floor(idx / cols)
-    n.position = { x: margin + col * spacingX, y: header + margin + row * spacingY }
-    n.extent = 'parent'
-  })
-}
-
-// ==================== 变量管理 ====================
-function addVariable() {
-  const k = (newVarKey.value || '').trim()
-  if (!k || !selectedNode.value)
-    return
-
-  selectedNode.value.data.variables = selectedNode.value.data.variables || {}
-  selectedNode.value.data.variables[k] = newVarValue.value
-  newVarKey.value = ''
-  newVarValue.value = ''
-
-  const i = nodes.value.findIndex(n => n.id === selectedNode.value.id)
-  if (i !== -1) {
-    nodes.value[i] = {
-      ...selectedNode.value,
-      data: {
-        ...selectedNode.value.data,
-        variables: { ...selectedNode.value.data.variables },
-      },
-    }
-  }
-}
-
-function removeVariable(k) {
-  if (!selectedNode.value?.data?.variables?.[k])
-    return
-
-  delete selectedNode.value.data.variables[k]
-  const i = nodes.value.findIndex(n => n.id === selectedNode.value.id)
-  if (i !== -1) {
-    nodes.value[i] = {
-      ...selectedNode.value,
-      data: {
-        ...selectedNode.value.data,
-        variables: { ...selectedNode.value.data.variables },
-      },
-    }
-  }
-}
-
-// ==================== 状态控制 ====================
-const isRunning = ref(false)
-const executionLogs = ref([])
-
-function openSettings() {
-  settingsOpen.value = true
-}
-
-function saveSettings() {
-  localStorage.setItem('wf_base_url', globalSettings.value.baseUrl)
-  localStorage.setItem('wf_api_key', globalSettings.value.apiKey)
-  settingsOpen.value = false
-  window.$message?.success('设置已保存')
-}
-
-function resetStatus() {
-  nodes.value.forEach((n) => {
-    n.data.status = 'ready'
-  })
-  edges.value.forEach((e) => {
-    e.data.status = 'default'
-  })
-  executionLogs.value = []
-}
-
-// 真实 API 调用
-async function executeNodeLogic(node, input) {
-  const { type, params } = node.data
-  const { apiKey, baseUrl } = globalSettings.value
-
-  // 1. 输入节点：直接返回
-  if (type === 'input-node') {
-    return input
-  }
-
-  // 2. 检查配置
-  if (!apiKey && (type === 'llm-node' || type === 'image-gen-node')) {
-    throw new Error('请先点击右上角设置图标配置 API Key')
-  }
-
-  // 使用内部代理解决跨域问题
-  // const proxyUrl = '/api/proxy'
-
-  // 3. LLM 节点调用
-  if (type === 'llm-node') {
-    const model = params.model || 'gpt-3.5-turbo'
-    const temperature = Number(params.temperature) || 0.7
-
-    // 构建消息历史，这里简化为 system + user
-    const messages = [
-      { role: 'system', content: '你是一个有用的助手。' },
-      { role: 'user', content: input },
-    ]
-
-    try {
-      // 处理 URL 尾部斜杠
-      const url = `${baseUrl.replace(/\/+$/, '')}/chat/completions`
-      const res = await api.aiProxy({
-        url,
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`,
-        },
-        body: {
-          model,
-          messages,
-          temperature,
-        },
-      })
-
-      return res.data?.choices?.[0]?.message?.content || '无返回内容'
-    }
-    catch (e) {
-      throw new Error(`LLM 请求失败: ${e.message || e}`)
-    }
-  }
-
-  // 4. 绘图节点调用
-  if (type === 'image-gen-node') {
-    const size = params.size || '1024x1024'
-    // OpenAI 格式
-    try {
-      const url = `${baseUrl.replace(/\/+$/, '')}/images/generations`
-      const res = await api.aiProxy({
-        url,
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`,
-        },
-        body: {
-          prompt: input,
-          n: 1,
-          size,
-          model: 'dall-e-3', // 默认尝试用 dall-e-3
-        },
-      })
-
-      const imgUrl = res.data?.data?.[0]?.url
-      return imgUrl ? `![生成图片](${imgUrl})` : '未获取到图片地址'
-    }
-    catch (e) {
-      throw new Error(`绘图请求失败: ${e.message || e}`)
-    }
-  }
-
-  // 5. 其他节点（工具/分支等）模拟
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve(`[模拟执行] ${type} 处理了: ${input.slice(0, 10)}...`)
-    }, 1000)
-  })
-}
-
+// 运行工作流
 async function runWorkflow() {
   if (isRunning.value)
     return
+
   isRunning.value = true
-  resetStatus()
   executionLogs.value = []
 
   try {
-    const startNodes = getStartNodes()
-    if (startNodes.length === 0) {
-      window.$message?.warning('没有找到起始节点 (输入节点)')
-      return
+    // 重置状态
+    nodes.value.forEach(n => (n.data.status = 'ready'))
+    edges.value.forEach(e => (e.data.status = 'default'))
+
+    // 创建执行上下文
+    const context = {
+      apiKeys: providerConfig.value.apiKeys,
+      baseUrls: providerConfig.value.baseUrls,
+      defaultInput: '你好，请介绍一下你自己。',
+      strictMode: false,
+      getApiKey: (provider) => {
+        const key = providerConfig.value.apiKeys[provider]
+        if (!key) {
+          console.warn(`[Workflow] 未找到 ${provider} 的 API Key，请在设置中配置`)
+        }
+        return key
+      },
+      getBaseUrl: (provider) => {
+        const url = providerConfig.value.baseUrls[provider]
+        if (!url) {
+          console.warn(`[Workflow] 未找到 ${provider} 的 Base URL，将使用默认值`)
+        }
+        return url
+      },
     }
 
-    // 简单的 BFS 执行引擎
-    const queue = [...startNodes]
-    const visited = new Set()
-    // 存储节点输出结果，供后续节点使用
-    const nodeOutputs = new Map()
-
-    // 初始化输入节点的输出（假设输入是静态的）
-    startNodes.forEach((id) => {
-      const node = nodes.value.find(n => n.id === id)
-      if (node)
-        nodeOutputs.set(id, node.data.variables?.input || '默认输入内容')
+    // 调试日志：输出当前配置
+    console.warn('[Workflow] 执行上下文配置:', {
+      apiKeys: Object.keys(context.apiKeys),
+      baseUrls: Object.keys(context.baseUrls),
     })
 
-    while (queue.length > 0) {
-      const nodeId = queue.shift()
-      if (visited.has(nodeId))
-        continue
-      visited.add(nodeId)
-
+    // 监听事件
+    executor.on('nodeStart', ({ nodeId }) => {
       const node = nodes.value.find(n => n.id === nodeId)
-      if (!node)
-        continue
+      if (node)
+        node.data.status = 'running'
+    })
 
-      // 设置节点状态为运行中
-      node.data.status = 'running'
+    executor.on('nodeComplete', ({ nodeId }) => {
+      const node = nodes.value.find(n => n.id === nodeId)
+      if (node)
+        node.data.status = 'done'
+    })
 
-      // 获取上游节点的输出作为输入
-      const incomingEdges = edges.value.filter(e => e.target === nodeId)
-      let inputData = ''
-      if (incomingEdges.length > 0) {
-        // 简单拼接上游结果
-        inputData = incomingEdges.map(e => nodeOutputs.get(e.source)).join('\n')
-        // 高亮连线
-        incomingEdges.forEach(e => (e.data.status = 'running'))
-      }
-      else {
-        // 如果是起始节点，使用内部变量或默认值
-        inputData = node.data.variables?.input || 'Start'
-      }
-
-      // 记录步骤开始
-      const stepLog = {
-        id: node.id,
-        title: node.data.title,
-        type: node.data.type,
-        startTime: new Date().toLocaleTimeString(),
-        input: inputData,
-        params: node.data.params,
-        output: '',
-      }
-
-      // 执行节点逻辑
-      let outputData = ''
-      try {
-        outputData = await executeNodeLogic(node, inputData)
-      }
-      catch (err) {
+    executor.on('nodeError', ({ nodeId, error }) => {
+      const node = nodes.value.find(n => n.id === nodeId)
+      if (node)
         node.data.status = 'failed'
-        window.$message?.error(`节点 ${node.data.title} 执行失败: ${err.message}`)
-        throw err
-      }
+      window.$message?.error(`节点执行失败: ${error.message}`)
+    })
 
-      // 更新节点状态和输出
-      node.data.status = 'done'
-      nodeOutputs.set(nodeId, outputData)
+    // 执行工作流
+    const result = await executor.execute(nodes.value, edges.value, context)
 
-      // 将结果写入节点变量以便在UI查看
-      if (!node.data.variables)
-        node.data.variables = {}
-      node.data.variables.output = outputData.length > 50 ? `${outputData.slice(0, 50)}...` : outputData
-
-      stepLog.output = outputData
-      executionLogs.value.push(stepLog)
-
-      // 更新连线状态
-      incomingEdges.forEach(e => (e.data.status = 'success'))
-
-      // 将下游节点加入队列
-      const outgoing = getOutgoingEdges(nodeId)
-      outgoing.forEach((e) => {
-        queue.push(e.target)
-      })
-
-      // 稍微停顿一下，让动画可见
-      await new Promise(r => setTimeout(r, 500))
-    }
+    executionLogs.value = result.logs
+    logsOpen.value = true
 
     window.$message?.success('工作流执行完成')
-    downloadMarkdown()
+
+    // 保存执行历史
+    await saveExecutionHistory(result)
   }
   catch (error) {
-    console.error(error)
-    // 错误已经在 executeNodeLogic 中处理过一部分，这里是兜底
+    console.error('工作流执行失败:', error)
+    window.$message?.error(`工作流执行失败: ${error.message}`)
   }
   finally {
     isRunning.value = false
   }
 }
 
-function downloadMarkdown() {
-  if (executionLogs.value.length === 0)
-    return
-
-  let mdContent = `# 工作流执行报告\n\n执行时间: ${new Date().toLocaleString()}\n\n---\n\n`
-
-  executionLogs.value.forEach((step, index) => {
-    mdContent += `### 步骤 ${index + 1}: ${step.title} (${step.type})\n`
-    mdContent += `- **时间**: ${step.startTime}\n`
-
-    if (step.params && Object.keys(step.params).length > 0) {
-      mdContent += `- **参数**:\n`
-      Object.entries(step.params).forEach(([k, v]) => {
-        mdContent += `  - ${k}: ${v}\n`
-      })
-    }
-
-    mdContent += `\n**输入**:\n\`\`\`\n${step.input}\n\`\`\`\n`
-    mdContent += `\n**输出**:\n${step.output}\n`
-    mdContent += `\n---\n\n`
-  })
-
-  // 创建 Blob 并下载
-  const blob = new Blob([mdContent], { type: 'text/markdown;charset=utf-8' })
-  const url = URL.createObjectURL(blob)
-  const link = document.createElement('a')
-  link.href = url
-  link.download = `workflow_execution_${Date.now()}.md`
-  document.body.appendChild(link)
-  link.click()
-  document.body.removeChild(link)
-  URL.revokeObjectURL(url)
+function saveProviderConfig() {
+  // 重新加载配置（因为 v-model 已经自动更新了 providerConfig）
+  // 但为了确保数据一致，再次从 localStorage 读取
+  loadProviderConfig()
+  window.$message?.success('服务商配置已保存')
 }
 
-function openDebug() {
-  runWorkflow()
-}
-
-// ==================== 导入导出 ====================
 function openExport() {
   exportText.value = JSON.stringify(
-    { version: SCHEMA_VERSION, nodes: nodes.value, edges: edges.value },
+    { version: 1, nodes: nodes.value, edges: edges.value },
     null,
     2,
   )
   exportOpen.value = true
+}
+
+function copyExportText() {
+  navigator.clipboard.writeText(exportText.value)
+  window.$message?.success('已复制到剪贴板')
 }
 
 function openImport() {
@@ -916,150 +906,611 @@ function openImport() {
 
 function applyImport() {
   try {
-    const obj = JSON.parse(importText.value || '{}')
+    const obj = JSON.parse(importText.value)
     if (Array.isArray(obj.nodes) && Array.isArray(obj.edges)) {
       nodes.value = obj.nodes
       edges.value = obj.edges
       importOpen.value = false
       nextTick(() => {
-        alignLinear()
-        throttledFit()
+        vueFlowInstance.value?.fitView()
       })
+      window.$message?.success('导入成功')
+    }
+    else {
+      window.$message?.error('格式错误')
     }
   }
-  catch (e) {
-    console.error('导入失败', e)
+  catch {
+    window.$message?.error('JSON 解析失败')
   }
 }
 
-// ==================== 键盘快捷键 ====================
-useEventListener(window, 'resize', throttledFit)
+function truncate(text, length) {
+  return text.length > length ? `${text.slice(0, length)}...` : text
+}
 
-useEventListener(window, 'keydown', (e) => {
-  const isMeta = e.metaKey || e.ctrlKey
+// ==================== 工作流保存功能 ====================
 
-  // Ctrl/Cmd + R: 运行模拟
-  if (isMeta && e.key.toLowerCase() === 'r') {
-    e.preventDefault()
-    openDebug()
-    return
-  }
+// 显示保存对话框
+function showSaveDialog() {
+  window.$dialog?.create({
+    title: currentWorkflow.value.id ? '保存工作流' : '另存为',
+    content: () => {
+      return h('div', [
+        h('div', { style: 'margin-bottom: 12px' }, [
+          h('label', { style: 'display: block; margin-bottom: 4px; font-size: 14px' }, '工作流名称'),
+          h('input', {
+            id: 'workflow-name-input',
+            value: currentWorkflow.value.name,
+            placeholder: '请输入工作流名称',
+            style: 'width: 100%; padding: 8px; border: 1px solid #e5e7eb; border-radius: 4px',
+          }),
+        ]),
+        h('div', [
+          h('label', { style: 'display: block; margin-bottom: 4px; font-size: 14px' }, '描述（可选）'),
+          h('textarea', {
+            id: 'workflow-desc-input',
+            value: currentWorkflow.value.description,
+            placeholder: '请输入工作流描述',
+            style: 'width: 100%; padding: 8px; border: 1px solid #e5e7eb; border-radius: 4px; resize: vertical',
+            rows: 3,
+          }),
+        ]),
+      ])
+    },
+    positiveText: '保存',
+    negativeText: '取消',
+    onPositiveClick: async () => {
+      const nameInput = document.getElementById('workflow-name-input')
+      const descInput = document.getElementById('workflow-desc-input')
+      const name = nameInput?.value?.trim()
+      const description = descInput?.value?.trim()
 
-  // Ctrl/Cmd + D: 复制节点
-  if (isMeta && e.key.toLowerCase() === 'd') {
-    e.preventDefault()
-    if (selectedNode.value) {
-      const id = String(idSeed.value++)
-      const pos = {
-        x: selectedNode.value.position.x + 40,
-        y: selectedNode.value.position.y + 20,
+      if (!name) {
+        window.$message?.error('请输入工作流名称')
+        return false
       }
-      const copy = JSON.parse(JSON.stringify(selectedNode.value.data))
-      nodes.value.push({ id, type: 'special', position: pos, data: copy })
-      nextTick(() => {
-        alignLinear()
-        throttledFit()
-      })
+
+      await saveWorkflow(name, description)
+    },
+  })
+}
+
+// 保存工作流
+async function saveWorkflow(name, description) {
+  try {
+    const workflow = {
+      id: currentWorkflow.value.id,
+      name,
+      description,
+      nodes: nodes.value,
+      edges: edges.value,
+      version: 1,
     }
+
+    const id = await workflowStorage.saveWorkflow(workflow)
+
+    currentWorkflow.value = {
+      id: id || currentWorkflow.value.id,
+      name,
+      description,
+    }
+
+    window.$message?.success('工作流已保存')
+  }
+  catch (error) {
+    console.error('[Workflow] 保存失败:', error)
+    window.$message?.error('保存失败')
+  }
+}
+
+// 加载已保存的工作流
+function loadSavedWorkflow(workflow) {
+  if (!workflow || !workflow.nodes || !workflow.edges) {
+    window.$message?.error('无效的工作流数据')
     return
   }
 
-  // Delete: 删除节点或连线
-  if (e.key === 'Delete') {
-    if (selectedType.value === 'node' && selectedNode.value) {
-      const nid = selectedNode.value.id
-      nodes.value = nodes.value.filter(n => n.id !== nid)
-      edges.value = edges.value.filter(e => e.source !== nid && e.target !== nid)
-      selectedNodeId.value = null
+  // 确认是否替换当前工作流
+  if (nodes.value.length > 3 || edges.value.length > 2) {
+    window.$dialog?.warning({
+      title: '确认加载工作流',
+      content: '加载工作流将替换当前内容，是否继续？',
+      positiveText: '确定',
+      negativeText: '取消',
+      onPositiveClick: () => {
+        applyWorkflow(workflow)
+      },
+    })
+  }
+  else {
+    applyWorkflow(workflow)
+  }
+}
+
+// 应用工作流到画布
+function applyWorkflow(workflow) {
+  nodes.value = workflow.nodes
+  edges.value = workflow.edges
+
+  currentWorkflow.value = {
+    id: workflow.id,
+    name: workflow.name,
+    description: workflow.description,
+  }
+
+  // 更新 ID 种子
+  const maxId = Math.max(...nodes.value.map(n => Number.parseInt(n.id) || 0))
+  idSeed.value = maxId + 1
+
+  // 适配视图
+  nextTick(() => {
+    handleFit()
+  })
+
+  window.$message?.success(`已加载工作流：${workflow.name}`)
+}
+
+// 保存执行历史
+async function saveExecutionHistory(result) {
+  try {
+    // 深度序列化并清理数据，移除不可序列化的对象
+    const sanitizeLogs = (logs) => {
+      return logs.map(log => ({
+        nodeId: log.nodeId,
+        nodeTitle: log.nodeTitle,
+        status: log.status,
+        duration: log.duration,
+        timestamp: log.timestamp,
+        // 只保留可序列化的数据
+        input: typeof log.input === 'string' ? log.input : JSON.stringify(log.input || {}),
+        output: typeof log.output === 'string' ? log.output : JSON.stringify(log.output || {}),
+        error: log.error ? String(log.error) : undefined,
+      }))
     }
-    else if (selectedType.value === 'edge' && selectedEdge.value) {
-      const eid = selectedEdge.value.id
-      edges.value = edges.value.filter(e => e.id !== eid)
-      selectedEdgeId.value = null
+
+    const history = {
+      workflowId: currentWorkflow.value.id,
+      workflowName: currentWorkflow.value.name,
+      status: result.success ? 'success' : 'failed',
+      duration: result.logs.reduce((sum, log) => sum + (log.duration || 0), 0),
+      logs: sanitizeLogs(result.logs),
+      nodeCount: nodes.value.length,
+      edgeCount: edges.value.length,
     }
+
+    await workflowStorage.saveHistory(history)
+    console.warn('[Workflow] 执行历史已保存')
+  }
+  catch (error) {
+    console.error('[Workflow] 保存执行历史失败:', error)
+  }
+}
+
+// 查看历史记录
+function viewHistory(history) {
+  if (!history || !history.logs) {
+    window.$message?.error('无效的历史记录')
+    return
+  }
+
+  executionLogs.value = history.logs
+  logsOpen.value = true
+}
+
+// 快捷键
+useEventListener(window, 'keydown', (e) => {
+  if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'r') {
+    e.preventDefault()
+    runWorkflow()
+  }
+  if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's') {
+    e.preventDefault()
+    showSaveDialog()
+  }
+  if (e.key === 'Delete' && selectedNode.value) {
+    deleteNode()
   }
 })
-
-watch(() => nodes.value.length, alignLinear)
 </script>
 
 <style scoped>
 .workflow-container {
   width: 100%;
-  height: 100vh; /* 保证容器有稳定高度 */
+  height: 100vh;
   position: relative;
 }
 
 .viewer-toolbar {
   position: absolute;
-  top: 5px;
-  left: 5px;
-  right: 5px;
+  top: 10px;
+  left: 10px;
+  right: 10px;
   z-index: 1000;
   display: flex;
   align-items: center;
   justify-content: space-between;
   background: #fff;
   border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  padding: 10px 10px;
+  border-radius: 12px;
+  padding: 10px 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
+
 .toolbar-left,
 .toolbar-right {
   display: flex;
   align-items: center;
-  gap: 6px;
-}
-.toolbar-divider {
-  width: 1px;
-  height: 20px;
-  background: #e5e7eb;
-  margin: 0 6px;
+  gap: 8px;
 }
 
-.actions-floating {
-  position: absolute;
-  left: 10px;
-  bottom: 10px;
-  z-index: 1000;
+.toolbar-divider {
+  width: 1px;
+  height: 24px;
+  background: #e5e7eb;
+  margin: 0 8px;
+}
+
+.param-value {
+  font-size: 12px;
+  color: #6b7280;
+  margin-left: 8px;
+}
+
+.log-content {
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.log-content > div {
+  margin: 8px 0;
+}
+
+.log-error {
+  color: #ef4444;
+}
+
+/* ==================== AI 输出展示区域样式 ==================== */
+
+/* 优化的提示信息框 */
+.content-info-tip {
   display: flex;
-  align-items: center;
-  gap: 6px;
-  background: #fff;
-  border: 1px solid #e5e7eb;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  border-left: 4px solid #3b82f6;
   border-radius: 8px;
-  padding: 10px 10px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.08);
+  transition: all 0.3s ease;
 }
-.debug-logs {
-  max-height: 200px;
-  overflow: auto;
+
+.content-info-tip:hover {
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.12);
+  transform: translateX(2px);
+}
+
+.tip-icon {
+  font-size: 20px;
+  color: #3b82f6;
+  animation: pulse-subtle 2s ease-in-out infinite;
+}
+
+@keyframes pulse-subtle {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.tip-content {
+  flex: 1;
+}
+
+.tip-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1e40af;
+  margin-bottom: 2px;
+}
+
+.tip-desc {
   font-size: 12px;
-  color: #374151;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
-  padding: 6px;
-  background: #fafafa;
+  color: #60a5fa;
+  opacity: 0.9;
 }
-.var-row {
+
+/* AI输出区域容器 */
+.ai-output-section {
+  margin-top: 12px;
+  animation: fadeInUp 0.4s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 输出头部 - 高级渐变设计 */
+.output-header {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-top: 6px;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 50%, #047857 100%);
+  border-radius: 12px;
+  color: #ffffff;
+  box-shadow:
+    0 4px 14px rgba(16, 185, 129, 0.25),
+    0 2px 6px rgba(16, 185, 129, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
-.var-key {
-  min-width: 80px;
+
+/* 头部光效装饰 */
+.output-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  animation: shimmer 3s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    left: -100%;
+  }
+  50%,
+  100% {
+    left: 100%;
+  }
+}
+
+.output-header:hover {
+  box-shadow:
+    0 6px 20px rgba(16, 185, 129, 0.35),
+    0 3px 10px rgba(16, 185, 129, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  z-index: 1;
+}
+
+.header-right {
+  z-index: 1;
+}
+
+.output-icon {
+  font-size: 22px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15));
+  animation: rotate-subtle 4s ease-in-out infinite;
+}
+
+@keyframes rotate-subtle {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(5deg);
+  }
+}
+
+.output-title {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+/* 内容展示框 - 现代卡片设计 */
+.output-content-box {
+  background: linear-gradient(to bottom, #ffffff 0%, #fafafa 100%);
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 16px;
+  min-height: 120px;
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.output-content-box:hover {
+  border-color: #10b981;
+  box-shadow:
+    0 4px 16px rgba(16, 185, 129, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+/* 左侧装饰条 */
+.output-content-box::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 20px;
+  bottom: 20px;
+  width: 4px;
+  background: linear-gradient(to bottom, #10b981, #059669);
+  border-radius: 0 4px 4px 0;
+  opacity: 0.6;
+}
+
+/* 文本内容 - 优化可读性 */
+.output-text {
+  font-size: 14px;
+  line-height: 1.9;
+  color: #1f2937;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  letter-spacing: 0.2px;
+  padding-left: 12px;
+}
+
+/* 美化滚动条 */
+.output-text::-webkit-scrollbar {
+  width: 8px;
+}
+
+.output-text::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+
+.output-text::-webkit-scrollbar-thumb {
+  background: linear-gradient(to bottom, #10b981, #059669);
+  border-radius: 4px;
+  transition: background 0.3s ease;
+}
+
+.output-text::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(to bottom, #059669, #047857);
+}
+
+/* 图片画廊 - 多图展示 */
+.images-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+  padding: 12px;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+}
+
+.image-item {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  background: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+}
+
+.image-item:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+.image-item .output-image {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  display: block;
+}
+
+.image-item .image-actions {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.image-item:hover .image-actions {
+  opacity: 1;
+}
+
+.image-item .image-actions .n-button {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(4px);
+}
+
+.image-item .image-title {
+  padding: 8px 12px;
   font-size: 12px;
-  color: #374151;
+  color: #64748b;
+  background: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-.var-input {
-  flex: 1;
+
+/* n-image 样式优化 */
+.image-item :deep(.n-image) {
+  width: 100%;
+  display: block;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.image-item :deep(.n-image img) {
+  transition: transform 0.3s ease;
+}
+
+.image-item:hover :deep(.n-image img) {
+  transform: scale(1.05);
+}
+
+/* 图片展示 - 优雅设计 */
+.output-image-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 12px;
+  background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+  border-radius: 8px;
+}
+
+.output-image {
+  max-width: 100%;
+  max-height: 500px;
+  border-radius: 10px;
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.12),
+    0 4px 8px rgba(0, 0, 0, 0.08);
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 3px solid #ffffff;
+}
+
+.output-image:hover {
+  transform: scale(1.03) translateY(-2px);
+  box-shadow:
+    0 12px 32px rgba(16, 185, 129, 0.2),
+    0 6px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* 操作按钮区域 - 专业布局 */
+.output-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: linear-gradient(to right, #f9fafb, #f3f4f6);
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  margin-top: 4px;
 }
 </style>
 
 <style>
-/* import the necessary styles for Vue Flow to work */
 @import '@vue-flow/core/dist/style.css';
-
-/* import the default theme, this is optional but generally recommended */
 @import '@vue-flow/core/dist/theme-default.css';
 </style>

@@ -24,20 +24,26 @@
 </template>
 
 <script setup>
-import { inject } from '@vercel/analytics'
 import { darkTheme, dateZhCN, zhCN } from 'naive-ui'
 import { LayoutFloatMenu } from '@/components'
 import { useWelcomeBack } from '@/composables'
 import { useAppStore, useTabStore } from '@/store'
 
 useWelcomeBack()
-inject({
-  mode: 'production', // 'auto' | 'development' | 'production'
-  beforeSend: (event) => {
-    // 可以在发送前修改或过滤事件
-    return event
-  },
-})
+
+// 只在生产环境启用 Vercel Analytics
+if (import.meta.env.PROD) {
+  import('@vercel/analytics').then(({ inject }) => {
+    inject({
+      mode: 'production',
+      beforeSend: (event) => {
+        return event
+      },
+    })
+  }).catch(() => {
+    // 忽略 Analytics 加载失败
+  })
+}
 const layouts = new Map()
 function getLayout(name) {
   // 利用map将加载过的layout缓存起来，防止重新加载layout导致页面闪烁

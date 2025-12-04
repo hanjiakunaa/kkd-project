@@ -49,7 +49,7 @@ export const NODE_TYPES = [
       provider: 'openai',
       model: 'gpt-4o-mini',
       temperature: 0.7,
-      maxTokens: 2000,
+      maxTokens: 4096, // 增加到4096，支持更长的输出
       systemPrompt: '你是一个有用的助手。',
     },
   },

@@ -8,9 +8,11 @@ const props = defineProps({
   selected: { type: Boolean, default: false },
 })
 
+// 节点展开状态
+const expanded = ref(false)
+
 const statusClass = computed(() => `status-${(props.data?.status || 'ready')}`)
 const typeClass = computed(() => `type-${(props.data?.type || 'default')}`)
-const expanded = ref(false)
 const isBranch = computed(() => props.data?.type === 'branch-node')
 const isGroup = computed(() => props.data?.type === 'group-node')
 </script>
@@ -35,15 +37,6 @@ const isGroup = computed(() => props.data?.type === 'group-node')
       </div>
       <div v-if="data?.params" class="node-tags">
         <span v-for="(v, k, i) in data.params" v-show="i < 3" :key="k" class="tag">{{ k }}</span>
-      </div>
-      <div v-if="expanded" class="node-details">
-        <div class="details-title">
-          变量
-        </div>
-        <div class="details-vars">
-          <span v-for="(v, k) in (data?.variables || {})" :key="k" class="var">{{ k }}:{{ String(v).slice(0, 12) }}</span>
-          <span v-if="!data?.variables || Object.keys(data.variables).length === 0" class="var empty">无</span>
-        </div>
       </div>
     </div>
     <!-- 句柄：普通节点顶部/底部；工作组左/右 -->
@@ -71,6 +64,7 @@ const isGroup = computed(() => props.data?.type === 'group-node')
     box-shadow 0.2s ease,
     border-color 0.2s ease;
 }
+
 .node-card.type-group-node {
   min-width: 320px;
   max-width: unset;
@@ -129,33 +123,6 @@ const isGroup = computed(() => props.data?.type === 'group-node')
   display: flex;
   gap: 6px;
   flex-wrap: wrap;
-}
-.node-details {
-  margin-top: 8px;
-  border-top: 1px dashed #e5e7eb;
-  padding-top: 8px;
-}
-.details-title {
-  font-size: 12px;
-  color: #6b7280;
-  margin-bottom: 4px;
-}
-.details-vars {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-.var {
-  font-size: 11px;
-  color: #374151;
-  background: #f3f4f6;
-  border: 1px solid #e5e7eb;
-  border-radius: 999px;
-  padding: 2px 6px;
-}
-.var.empty {
-  color: #9ca3af;
-  background: #f9fafb;
 }
 .tag {
   font-size: 11px;

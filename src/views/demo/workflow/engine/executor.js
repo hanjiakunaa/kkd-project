@@ -32,8 +32,8 @@ export class WorkflowExecutor {
    * 执行工作流
    * @param {Array} nodes - 节点列表
    * @param {Array} edges - 连线列表
-   * @param {Object} context - 执行上下文
-   * @returns {Promise<Object>} - 执行结果
+   * @param {object} context - 执行上下文
+   * @returns {Promise<object>} - 执行结果
    */
   async execute(nodes, edges, context) {
     if (this.isRunning) {
@@ -112,7 +112,7 @@ export class WorkflowExecutor {
           hits: this.cacheHits,
           misses: this.cacheMisses,
           hitRate: this.cacheHits + this.cacheMisses > 0
-            ? (this.cacheHits / (this.cacheHits + this.cacheMisses) * 100).toFixed(2) + '%'
+            ? `${(this.cacheHits / (this.cacheHits + this.cacheMisses) * 100).toFixed(2)}%`
             : '0%',
         },
       }
@@ -166,7 +166,7 @@ export class WorkflowExecutor {
           this.cacheHits++
           log.cached = true
           this._emit('cacheHit', { nodeId: node.id })
-          console.log(`[WorkflowExecutor] 使用缓存结果: ${node.id}`)
+          console.warn(`[WorkflowExecutor] 使用缓存结果: ${node.id}`)
         }
         else {
           this.cacheMisses++
@@ -224,6 +224,24 @@ export class WorkflowExecutor {
         node.data.variables = {}
       }
       node.data.variables.output = this._formatOutputForDisplay(output)
+
+      // 如果是图片生成节点，提取并保存图片URL到节点数据
+      if (node.data.type === 'image-gen-node') {
+        const imageUrl = this._extractImageUrl(output)
+        if (imageUrl) {
+          node.data.imageUrl = imageUrl
+          console.warn('[图片节点] 保存imageUrl到节点数据:', imageUrl)
+        }
+      }
+
+      // 如果是输出节点，收集所有上游节点的图片
+      if (node.data.type === 'output-node') {
+        const images = this._collectUpstreamImages(nodes)
+        if (images.length > 0) {
+          node.data.images = images
+          console.warn('[输出节点] 收集到的图片:', images)
+        }
+      }
 
       // 记录执行时间
       log.duration = Date.now() - startTimestamp
@@ -329,16 +347,124 @@ export class WorkflowExecutor {
 
   /**
    * 格式化输出用于显示
+   * 修改：返回完整内容，不再截断
    * @private
    */
   _formatOutputForDisplay(output) {
+    // 调试：查看输出值
+    console.warn('[格式化输出] 原始输出:', output)
+    console.warn('[格式化输出] 类型:', typeof output)
+
     if (typeof output === 'string') {
-      return output.length > 50 ? `${output.slice(0, 50)}...` : output
+      // 返回完整内容，不截断
+      console.warn('[格式化输出] 返回字符串')
+      return output
     }
     if (typeof output === 'object') {
-      return JSON.stringify(output).slice(0, 50) + '...'
+      console.warn('[格式化输出] 对象类型:', output?.type)
+      console.warn('[格式化输出] 是否有markdown:', !!output?.markdown)
+
+      // 如果是图片对象，返回markdown格式
+      if (output.type === 'image' && output.markdown) {
+        console.warn('[格式化输出] 返回图片markdown:', output.markdown)
+        return output.markdown
+      }
+      // 如果是视频对象，返回markdown格式
+      if (output.type === 'video' && output.markdown) {
+        console.warn('[格式化输出] 返回视频markdown:', output.markdown)
+        return output.markdown
+      }
+      // 其他对象返回完整的JSON字符串
+      console.warn('[格式化输出] 返回JSON字符串')
+      return JSON.stringify(output, null, 2)
     }
+    console.warn('[格式化输出] 返回String转换')
     return String(output)
+  }
+
+  /**
+   * 收集所有上游图片生成节点的图片
+   * @private
+   * @param {Array} nodes - 所有节点
+   * @returns {Array} 图片数组 [{url, prompt, nodeId}]
+   */
+  _collectUpstreamImages(nodes) {
+    const images = []
+    for (const node of nodes) {
+      if (node.data.type === 'image-gen-node' && node.data.imageUrl) {
+        images.push({
+          url: node.data.imageUrl,
+          prompt: node.data.title || '生成的图片',
+          nodeId: node.id,
+        })
+      }
+    }
+    return images
+  }
+
+  /**
+   * 从输出中提取图片URL
+   * @private
+   * @param {*} output - 输出内容
+   * @returns {string} 图片URL
+   */
+  _extractImageUrl(output) {
+    // 1. 如果是图片对象，直接返回url
+    if (typeof output === 'object' && output?.url) {
+      return output.url
+    }
+
+    // 2. 如果是字符串，尝试解析
+    const str = String(output).trim()
+
+    // 2.1 JSON数组格式: [{"url": "..."}]
+    if (str.startsWith('[') && str.includes('"url"')) {
+      try {
+        const parsed = JSON.parse(str)
+        if (Array.isArray(parsed) && parsed[0]?.url) {
+          return parsed[0].url
+        }
+      }
+      catch {
+        // 解析失败
+      }
+    }
+
+    // 2.2 JSON对象格式: {"url": "..."}
+    if (str.startsWith('{') && str.includes('"url"')) {
+      try {
+        const parsed = JSON.parse(str)
+        if (parsed?.url) {
+          return parsed.url
+        }
+      }
+      catch {
+        // 解析失败
+      }
+    }
+
+    // 2.3 从markdown中提取真实图片服务器的URL
+    const realImageServers = ['ufileos.com', 'bigmodel.cn', 'zhipuai']
+    for (const server of realImageServers) {
+      const urlRegex = new RegExp(`(https?://[^\\s"'<>)]*${server}[^\\s"'<>)]*)`)
+      const match = str.match(urlRegex)
+      if (match) {
+        return match[1]
+      }
+    }
+
+    // 2.4 从markdown格式提取（排除示例链接）
+    const mdMatch = str.match(/!\[.*?\]\((https?:\/\/[^)]+)\)/)
+    if (mdMatch && !mdMatch[1].includes('example.com')) {
+      return mdMatch[1]
+    }
+
+    // 2.5 直接是URL
+    if (/^https?:\/\//.test(str) && !str.includes('example.com')) {
+      return str
+    }
+
+    return ''
   }
 
   /**
@@ -435,4 +561,3 @@ export class WorkflowExecutor {
     return await resultCache.getStats()
   }
 }
-

@@ -52,7 +52,7 @@ async function generateImage(params, apiKey, baseUrl) {
       'Authorization': `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
-      model: params.model || 'cogview-3',
+      model: params.model || 'cogview-4',
       prompt: params.prompt,
       size: params.size || '1024x1024',
     }),
