@@ -7,6 +7,7 @@ import AutoImport from 'unplugin-auto-import/vite'
 import { NaiveUiResolver } from 'unplugin-vue-components/resolvers'
 import Components from 'unplugin-vue-components/vite'
 import { defineConfig, loadEnv } from 'vite'
+import { VitePWA } from 'vite-plugin-pwa'
 import removeNoMatch from 'vite-plugin-router-warn'
 import VueDevTools from 'vite-plugin-vue-devtools'
 import { pluginIcons, pluginPagePathes } from './build/plugin-isme'
@@ -38,6 +39,39 @@ export default defineConfig(({ mode }) => {
       }),
       pluginPagePathes(),
       pluginIcons(),
+      VitePWA({
+        registerType: 'autoUpdate',
+        workbox: {
+          globPatterns: ['**/*.{js,css,html,ico,png,svg,webp}'],
+          maximumFileSizeToCacheInBytes: 10485760,
+          clientsClaim: true,
+          skipWaiting: true,
+        },
+        includeAssets: ['favicon.png'],
+        manifest: {
+          name: 'KK',
+          short_name: 'KK',
+          description: 'KK Vue3 应用',
+          theme_color: '#ffffff',
+          display: 'standalone',
+          background_color: '#ffffff',
+          icons: [
+            {
+              src: 'favicon.png',
+              sizes: '192x192',
+              type: 'image/png',
+            },
+            {
+              src: 'favicon.png',
+              sizes: '512x512',
+              type: 'image/png',
+            },
+          ],
+        },
+        devOptions: {
+          enabled: true,
+        },
+      }),
       ...(isDev ? [removeNoMatch()] : []),
       ...(VITE_ANALYZE === 'true'
         ? [visualizer({

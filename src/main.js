@@ -4,8 +4,9 @@ import App from './App.vue'
 import { setupDirectives } from './directives'
 import { setupGlobalComponents } from './plugins/components'
 import { conponentIconPlugins } from './plugins/icons'
-import { setupRouter } from './router'
+import { setupPwa } from './plugins/pwa'
 
+import { setupRouter } from './router'
 import { setupStore } from './store'
 import { setupNaiveDiscreteApi } from './utils'
 import '@/styles/reset.css'
@@ -40,6 +41,7 @@ async function bootstrap() {
   await setupRouter(app)
   app.mount('#app')
   setupNaiveDiscreteApi()
+  setupPwa()
 }
 
 bootstrap()
