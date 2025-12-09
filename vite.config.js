@@ -128,38 +128,38 @@ export default defineConfig(({ mode }) => {
       },
     },
     build: {
-      chunkSizeWarningLimit: 1024, // chunk 大小警告的限制（单位kb）
+      chunkSizeWarningLimit: 2048, // chunk 大小警告的限制（单位kb）
       rollupOptions: {
-        manualChunks(id) {
-          if (id.includes('node_modules')) {
-            if (id.includes('/vue/') || id.includes('vue-router') || id.includes('/pinia/'))
-              return 'vue'
-            if (id.includes('naive-ui'))
-              return 'naive'
-            if (id.includes('/echarts') || id.includes('vue-echarts'))
-              return 'echarts'
-            if (id.includes('codemirror') || id.includes('@codemirror'))
-              return 'codemirror'
-            if (id.includes('pdfjs-dist'))
-              return 'pdf'
-            if (id.includes('xlsx'))
-              return 'xlsx'
-            if (id.includes('lodash-es'))
-              return 'lodash'
-            if (id.includes('dayjs'))
-              return 'dayjs'
-            if (id.includes('/axios'))
-              return 'axios'
-            if (id.includes('@vueuse'))
-              return 'vueuse'
-            if (id.includes('oh-vue-icons'))
-              return 'icons'
-            if (id.includes('@vue-flow'))
-              return 'flow'
-            return 'vendor'
-          }
-        },
         output: {
+          manualChunks(id) {
+            if (id.includes('node_modules')) {
+              if (id.includes('/vue/') || id.includes('vue-router') || id.includes('/pinia/'))
+                return 'vue'
+              if (id.includes('naive-ui'))
+                return 'naive'
+              if (id.includes('/echarts') || id.includes('vue-echarts'))
+                return 'echarts'
+              if (id.includes('codemirror') || id.includes('@codemirror'))
+                return 'codemirror'
+              if (id.includes('pdfjs-dist'))
+                return 'pdf'
+              if (id.includes('xlsx'))
+                return 'xlsx'
+              if (id.includes('lodash-es'))
+                return 'lodash'
+              if (id.includes('dayjs'))
+                return 'dayjs'
+              if (id.includes('/axios'))
+                return 'axios'
+              if (id.includes('@vueuse'))
+                return 'vueuse'
+              if (id.includes('oh-vue-icons'))
+                return 'icons'
+              if (id.includes('@vue-flow'))
+                return 'flow'
+              return 'vendor'
+            }
+          },
           entryFileNames: 'assets/[name].[hash].js',
           chunkFileNames: 'assets/[name].[hash].js',
           assetFileNames: 'assets/[name].[hash].[ext]',

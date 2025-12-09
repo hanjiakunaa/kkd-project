@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia'
+import { pageCacheDB } from '@/utils/storage/indexedDB'
 import { useRouterStore } from './router'
 
 export const useTabStore = defineStore('tab', {
@@ -36,7 +37,6 @@ export const useTabStore = defineStore('tab', {
         return
       // 清除缓存数据
       if (useCache && findItem.useCache) {
-        const { pageCacheDB } = await import('@/utils/storage/indexedDB')
         const routeName = findItem.name
         if (routeName && pageCacheDB.isSupported()) {
           try {
