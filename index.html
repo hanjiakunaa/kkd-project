@@ -5,12 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" href="/favicon.png" />
     <!-- Luckysheet 本地静态资源（来自 public/luckysheet），使用 %BASE_URL% 以适配生产环境子路径 -->
-    <link rel="stylesheet" href="%BASE_URL%luckysheet/plugins/css/plugins.css" />
-    <link rel="stylesheet" href="%BASE_URL%luckysheet/plugins/plugins.css" />
-    <link rel="stylesheet" href="%BASE_URL%luckysheet/css/luckysheet.css" />
-    <link rel="stylesheet" href="%BASE_URL%luckysheet/assets/iconfont/iconfont.css" />
-    <script src="%BASE_URL%luckysheet/plugins/js/plugin.js"></script>
-    <script src="%BASE_URL%luckysheet/luckysheet.umd.js"></script>
+    <link rel="stylesheet" href="%BASE_URL%luckysheet/plugins/css/plugins.css" media="print" />
+    <link rel="stylesheet" href="%BASE_URL%luckysheet/plugins/plugins.css" media="print" />
+    <link rel="stylesheet" href="%BASE_URL%luckysheet/css/luckysheet.css" media="print" />
+    <link rel="stylesheet" href="%BASE_URL%luckysheet/assets/iconfont/iconfont.css" media="print" />
+    <script src="%BASE_URL%luckysheet/plugins/js/plugin.js" defer></script>
+    <script src="%BASE_URL%luckysheet/luckysheet.umd.js" defer></script>
 
     <title>%VITE_TITLE%</title>
     <style>
