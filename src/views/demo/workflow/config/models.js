@@ -30,7 +30,7 @@ export const AI_MODELS = {
       { value: 'glm-3-turbo', label: 'GLM-3 Turbo', maxTokens: 128000 },
     ],
     image: [
-      { value: 'cogview-3', label: 'CogView-3', sizes: ['1024x1024', '768x1024', '1024x768'] },
+      { value: 'cogview-4', label: 'CogView-4', sizes: ['1024x1024', '768x1024', '1024x768'] },
     ],
     video: [
       { value: 'cogvideox', label: 'CogVideoX', duration: [5, 10], resolution: ['720p', '1080p'] },

@@ -1,6 +1,6 @@
 /**
  * 智谱 AI 适配器
- * 支持 GLM-4, CogView-3, CogVideoX 等
+ * 支持 GLM-4, CogView-4, CogVideoX 等
  */
 
 import { BaseAdapter } from './base'
@@ -26,23 +26,55 @@ export class ZhipuAdapter extends BaseAdapter {
       max_tokens: options.maxTokens,
     }
 
-    // 直接调用 API
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${this.apiKey}`,
-      },
-      body: JSON.stringify(payload),
-    })
+    // 带重试的请求（处理429错误）
+    const maxRetries = 3
+    let lastError = null
 
-    if (!response.ok) {
-      const errorText = await response.text()
-      throw new Error(`智谱 API 错误 ${response.status}: ${errorText}`)
+    for (let i = 0; i < maxRetries; i++) {
+      try {
+        // 如果是重试，等待一段时间
+        if (i > 0) {
+          const delay = Math.min(1000 * (2 ** i), 10000)
+          console.warn(`[智谱AI] 请求限流，${delay / 1000}秒后重试 (${i}/${maxRetries})...`)
+          await new Promise(resolve => setTimeout(resolve, delay))
+        }
+
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${this.apiKey}`,
+          },
+          body: JSON.stringify(payload),
+        })
+
+        // 429 Too Many Requests - 继续重试
+        if (response.status === 429) {
+          const errorText = await response.text()
+          lastError = new Error(`请求频率超限，请稍后重试`)
+          console.warn(`[智谱AI] 429错误: ${errorText}`)
+          continue
+        }
+
+        // 其他错误 - 直接抛出
+        if (!response.ok) {
+          const errorText = await response.text()
+          throw new Error(`智谱 API 错误 ${response.status}: ${errorText}`)
+        }
+
+        // 成功
+        const data = await response.json()
+        return data.choices?.[0]?.message?.content || ''
+      }
+      catch (error) {
+        if (i === maxRetries - 1) {
+          throw lastError || error
+        }
+        lastError = error
+      }
     }
 
-    const data = await response.json()
-    return data.choices?.[0]?.message?.content || ''
+    throw lastError || new Error('对话生成失败')
   }
 
   /**
@@ -97,7 +129,7 @@ export class ZhipuAdapter extends BaseAdapter {
             }
           }
         }
-        catch (e) {
+        catch {
           // 忽略解析错误
         }
       }
@@ -112,21 +144,84 @@ export class ZhipuAdapter extends BaseAdapter {
   async generateImage(prompt, options = {}) {
     const url = `${this.baseUrl}/images/generations`
     const payload = {
-      model: options.model || 'cogview-3',
+      model: options.model || 'cogview-4',
       prompt,
       size: options.size || '1024x1024',
     }
 
-    const response = await this._proxyRequest(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${this.apiKey}`,
-      },
-      body: payload,
-    })
+    // 带重试的请求（处理429错误）
+    const maxRetries = 3
+    let lastError = null
 
-    return response.data?.data?.[0]?.url || ''
+    for (let i = 0; i < maxRetries; i++) {
+      try {
+        // 如果是重试，等待一段时间
+        if (i > 0) {
+          const delay = Math.min(1000 * (2 ** i), 10000) // 指数退避：1s, 2s, 4s
+          console.warn(`[智谱AI] 请求限流，${delay / 1000}秒后重试 (${i}/${maxRetries})...`)
+          await new Promise(resolve => setTimeout(resolve, delay))
+        }
+
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${this.apiKey}`,
+          },
+          body: JSON.stringify(payload),
+        })
+
+        // 429 Too Many Requests - 继续重试
+        if (response.status === 429) {
+          const errorText = await response.text()
+          lastError = new Error(`请求频率超限，请稍后重试`)
+          console.warn(`[智谱AI] 429错误: ${errorText}`)
+          continue
+        }
+
+        // 其他错误 - 直接抛出
+        if (!response.ok) {
+          const errorText = await response.text()
+          throw new Error(`智谱 API 错误 ${response.status}: ${errorText}`)
+        }
+
+        // 成功
+        const data = await response.json()
+        
+        // 调试：查看API返回的数据
+        console.warn('[智谱AI] 图片生成API返回:', data)
+        
+        // 智谱AI的响应格式可能是：
+        // 格式1: {data: [{url: '...'}]}
+        // 格式2: [{url: '...'}]
+        let imageUrl = ''
+        
+        if (Array.isArray(data)) {
+          // 格式2：直接返回数组
+          imageUrl = data[0]?.url || ''
+        }
+        else if (data.data && Array.isArray(data.data)) {
+          // 格式1：包裹在data字段中
+          imageUrl = data.data[0]?.url || ''
+        }
+        else if (data.url) {
+          // 格式3：直接返回url字段
+          imageUrl = data.url
+        }
+        
+        console.warn('[智谱AI] 提取的图片URL:', imageUrl)
+        return imageUrl
+      }
+      catch (error) {
+        // 如果是最后一次重试，抛出错误
+        if (i === maxRetries - 1) {
+          throw lastError || error
+        }
+        lastError = error
+      }
+    }
+
+    throw lastError || new Error('图片生成失败')
   }
 
   /**
@@ -142,20 +237,28 @@ export class ZhipuAdapter extends BaseAdapter {
       image_url: typeof input === 'object' ? input.imageUrl : undefined,
     }
 
-    const response = await this._proxyRequest(url, {
+    // 直接调用 API（不使用代理）
+    const response = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${this.apiKey}`,
       },
-      body: payload,
+      body: JSON.stringify(payload),
     })
+
+    if (!response.ok) {
+      const errorText = await response.text()
+      throw new Error(`智谱 API 错误 ${response.status}: ${errorText}`)
+    }
+
+    const data = await response.json()
 
     // 智谱的视频生成是异步的，返回任务 ID
     return {
-      taskId: response.data?.id,
+      taskId: data.id,
       status: 'processing',
-      url: response.data?.video_url,
+      url: data.video_url,
     }
   }
 
@@ -165,18 +268,25 @@ export class ZhipuAdapter extends BaseAdapter {
   async getTaskStatus(taskId) {
     const url = `${this.baseUrl}/async-result/${taskId}`
 
-    const response = await this._proxyRequest(url, {
+    // 直接调用 API（不使用代理）
+    const response = await fetch(url, {
       method: 'GET',
       headers: {
-        'Authorization': `Bearer ${this.apiKey}`,
+        Authorization: `Bearer ${this.apiKey}`,
       },
     })
 
+    if (!response.ok) {
+      const errorText = await response.text()
+      throw new Error(`智谱 API 错误 ${response.status}: ${errorText}`)
+    }
+
+    const data = await response.json()
+
     return {
-      status: response.data?.task_status, // processing, success, failed
-      url: response.data?.video_result?.[0]?.url,
-      coverUrl: response.data?.video_result?.[0]?.cover_image_url,
+      status: data.task_status, // processing, success, failed
+      url: data.video_result?.[0]?.url,
+      coverUrl: data.video_result?.[0]?.cover_image_url,
     }
   }
 }
-

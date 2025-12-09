@@ -62,7 +62,7 @@ export const WORKFLOW_TEMPLATES = [
             label: '生成配图1',
             params: {
               provider: 'zhipu',
-              model: 'cogview-3',
+              model: 'cogview-4',
               size: '1024x1024',
             },
           },
@@ -75,7 +75,7 @@ export const WORKFLOW_TEMPLATES = [
             label: '生成配图2',
             params: {
               provider: 'zhipu',
-              model: 'cogview-3',
+              model: 'cogview-4',
               size: '1024x1024',
             },
           },
@@ -761,7 +761,7 @@ export const WORKFLOW_TEMPLATES = [
             label: '生成Logo方案2',
             params: {
               provider: 'zhipu',
-              model: 'cogview-3',
+              model: 'cogview-4',
               size: '1024x1024',
             },
           },
@@ -862,8 +862,8 @@ export function getTemplateById(id) {
  */
 export const TEMPLATE_CATEGORIES = [
   { value: 'all', label: '全部模板', icon: 'ri-apps-line' },
-  { value: 'content', label: '内容创作', icon: 'ri-quill-pen-line' },
+  { value: 'content', label: '内容创作', icon: 'gi-quill-ink' },
   { value: 'assistant', label: '智能助手', icon: 'ri-robot-line' },
-  { value: 'automation', label: '自动化', icon: 'ri-flashlight-line' },
+  { value: 'automation', label: '自动化', icon: 'fa-autoprefixer' },
   { value: 'design', label: '设计生成', icon: 'ri-palette-line' },
 ]
