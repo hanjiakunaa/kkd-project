@@ -32,12 +32,20 @@ export const WORKFLOW_TEMPLATES = [
             params: {
               provider: 'zhipu',
               model: 'glm-4-flash',
-              systemPrompt: `你是一个小红书文案专家。请根据产品描述生成：
-1. 吸引人的标题（带emoji）
-2. 3-5段精彩文案
-3. 相关话题标签
+              systemPrompt: `你是一个小红书文案专家。只用中文输出平台风格内容，不要任何代码、JSON、解释或分析。
 
-要求：语气轻松活泼，多用emoji，突出产品亮点。`,
+请根据产品描述生成：
+1. 吸引人的标题（带emoji）
+2. 3-5段精彩文案（每段不超过50字，口语化，包含表情）
+3. 相关话题标签（#标签）
+4. 末尾附加【图片描述】一句，概括画面元素与氛围，如：
+【图片描述】极简背景下产品置于中央，柔光，干净质感【
+
+严格要求：
+- 不要输出任何代码块或技术说明
+- 不要使用英文技术术语
+- 标签单独成行
+`,
               temperature: 0.8,
             },
           },
@@ -55,6 +63,17 @@ export const WORKFLOW_TEMPLATES = [
           },
         },
         {
+          id: 'text-process-2',
+          type: 'text-process',
+          position: { x: 250, y: 400 },
+          data: {
+            label: '清理代码与格式',
+            params: {
+              operation: 'stripCode',
+            },
+          },
+        },
+        {
           id: 'image-1',
           type: 'image-gen',
           position: { x: 400, y: 400 },
@@ -64,19 +83,7 @@ export const WORKFLOW_TEMPLATES = [
               provider: 'zhipu',
               model: 'cogview-4',
               size: '1024x1024',
-            },
-          },
-        },
-        {
-          id: 'image-2',
-          type: 'image-gen',
-          position: { x: 550, y: 400 },
-          data: {
-            label: '生成配图2',
-            params: {
-              provider: 'zhipu',
-              model: 'cogview-4',
-              size: '1024x1024',
+              prompt: '根据{{text-process-1}}生成适合社交的产品场景图',
             },
           },
         },
@@ -104,10 +111,9 @@ export const WORKFLOW_TEMPLATES = [
         { id: 'e1', source: 'input-1', target: 'llm-1' },
         { id: 'e2', source: 'llm-1', target: 'text-process-1' },
         { id: 'e3', source: 'text-process-1', target: 'image-1' },
-        { id: 'e4', source: 'text-process-1', target: 'image-2' },
-        { id: 'e5', source: 'llm-1', target: 'merge-1' },
+        { id: 'e5', source: 'llm-1', target: 'text-process-2' },
+        { id: 'e6a', source: 'text-process-2', target: 'merge-1' },
         { id: 'e6', source: 'image-1', target: 'merge-1' },
-        { id: 'e7', source: 'image-2', target: 'merge-1' },
         { id: 'e8', source: 'merge-1', target: 'output-1' },
       ],
     },
@@ -478,6 +484,8 @@ export const WORKFLOW_TEMPLATES = [
           data: {
             label: '图片输入',
             params: {
+              schema: 'image',
+              placeholder: '粘贴图片URL或上传文件',
               defaultValue: 'https://example.com/document.jpg',
             },
           },
@@ -649,7 +657,7 @@ export const WORKFLOW_TEMPLATES = [
             params: {
               provider: 'deepseek',
               model: 'deepseek-chat',
-              systemPrompt: `你是图片分析专家。基于多个AI的分析结果,生成一份专业的图片分析报告：
+              systemPrompt: `你是图片分析专家。基于以下综合分析结果生成专业报告：\n\n{{merge-1}}\n\n请按如下结构输出：
 
 # 图片分析报告
 
@@ -754,32 +762,6 @@ export const WORKFLOW_TEMPLATES = [
           },
         },
         {
-          id: 'image-2',
-          type: 'image-gen',
-          position: { x: 250, y: 550 },
-          data: {
-            label: '生成Logo方案2',
-            params: {
-              provider: 'zhipu',
-              model: 'cogview-4',
-              size: '1024x1024',
-            },
-          },
-        },
-        {
-          id: 'image-3',
-          type: 'image-gen',
-          position: { x: 400, y: 550 },
-          data: {
-            label: '生成Logo方案3',
-            params: {
-              provider: 'openai',
-              model: 'dall-e-3',
-              size: '1024x1024',
-            },
-          },
-        },
-        {
           id: 'llm-2',
           type: 'llm',
           position: { x: 400, y: 250 },
@@ -789,19 +771,6 @@ export const WORKFLOW_TEMPLATES = [
               provider: 'qwen',
               model: 'qwen-plus',
               systemPrompt: '描述Logo在不同场景的应用效果：名片、网站、产品包装等。用英文，适合AI绘画。',
-            },
-          },
-        },
-        {
-          id: 'image-4',
-          type: 'image-gen',
-          position: { x: 400, y: 400 },
-          data: {
-            label: '生成应用示例',
-            params: {
-              provider: 'qwen',
-              model: 'wanx-v1',
-              size: '1024*1024',
             },
           },
         },
@@ -827,15 +796,9 @@ export const WORKFLOW_TEMPLATES = [
         { id: 'e2', source: 'input-1', target: 'llm-2' },
         { id: 'e3', source: 'llm-1', target: 'text-process-1' },
         { id: 'e4', source: 'text-process-1', target: 'image-1' },
-        { id: 'e5', source: 'text-process-1', target: 'image-2' },
-        { id: 'e6', source: 'text-process-1', target: 'image-3' },
-        { id: 'e7', source: 'llm-2', target: 'image-4' },
         { id: 'e8', source: 'llm-1', target: 'merge-1' },
         { id: 'e9', source: 'image-1', target: 'merge-1' },
-        { id: 'e10', source: 'image-2', target: 'merge-1' },
-        { id: 'e11', source: 'image-3', target: 'merge-1' },
-        { id: 'e12', source: 'image-4', target: 'merge-1' },
-        { id: 'e13', source: 'merge-1', target: 'output-1' },
+        { id: 'e10', source: 'merge-1', target: 'output-1' },
       ],
     },
   },

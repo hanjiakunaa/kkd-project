@@ -58,7 +58,7 @@ export class WorkflowExecutor {
 
       // 2. 初始化起始节点的输出
       startNodes.forEach((node) => {
-        const input = node.data.variables?.input || context.defaultInput || '默认输入内容'
+        const input = node.data.variables?.input || node.data.params?.defaultValue || context.defaultInput || '默认输入内容'
         this.nodeOutputs.set(node.id, input)
       })
 
@@ -195,18 +195,23 @@ export class WorkflowExecutor {
           getNodeInputs: nodeId => this._getNodeInputs(nodeId, edges),
         }
 
+        const renderedInput = this._renderString(String(input))
+        const renderedParams = this._renderParams(node.data.params)
+        node.data.params = renderedParams
+        let retryCount = 0
         // 执行节点逻辑（带重试）
         if (this.options.enableRetry) {
           output = await retry(
-            () => executor.execute(node, input, execContext),
+            () => executor.execute(node, renderedInput, execContext),
             { maxRetries: 2 },
             (attempt, error, delay) => {
               this._emit('nodeRetry', { nodeId: node.id, attempt, error, delay })
+              retryCount = attempt
             },
           )
         }
         else {
-          output = await executor.execute(node, input, execContext)
+          output = await executor.execute(node, renderedInput, execContext)
         }
 
         // 保存到缓存
@@ -246,6 +251,13 @@ export class WorkflowExecutor {
       // 记录执行时间
       log.duration = Date.now() - startTimestamp
       log.output = output
+      log.status = 'success'
+      if (typeof log.retryCount !== 'number')
+        log.retryCount = 0
+      // 若使用重试，记录最终重试次数
+      if (!fromCache && typeof retryCount === 'number') {
+        log.retryCount = retryCount
+      }
 
       // 更新连线状态
       const incomingEdges = this._getIncomingEdges(node.id, edges)
@@ -258,6 +270,7 @@ export class WorkflowExecutor {
       node.data.status = 'failed'
       log.error = error.message
       log.duration = Date.now() - startTimestamp
+      log.status = 'error'
 
       // 更新连线状态
       const incomingEdges = this._getIncomingEdges(node.id, edges)
@@ -559,5 +572,48 @@ export class WorkflowExecutor {
    */
   async getCacheStats() {
     return await resultCache.getStats()
+  }
+
+  _renderString(str) {
+    const s = String(str)
+    return s.replace(/\{\{\s*([\w-]+)(?:\.([\w.]+))?\s*\}\}/g, (_, id, path) => {
+      const src = this.nodeOutputs.get(id)
+      if (src == null)
+        return ''
+      if (!path)
+        return String(src)
+      try {
+        const obj = typeof src === 'string' ? JSON.parse(src) : src
+        const parts = String(path).split('.')
+        let cur = obj
+        for (const p of parts) {
+          if (cur == null)
+            return ''
+          cur = cur[p]
+        }
+        return cur == null ? '' : String(cur)
+      }
+      catch {
+        return ''
+      }
+    })
+  }
+
+  _renderParams(params) {
+    if (!params || typeof params !== 'object')
+      return params
+    const walk = (val) => {
+      if (typeof val === 'string')
+        return this._renderString(val)
+      if (Array.isArray(val))
+        return val.map(walk)
+      if (val && typeof val === 'object') {
+        const out = {}
+        Object.keys(val).forEach(k => (out[k] = walk(val[k])))
+        return out
+      }
+      return val
+    }
+    return walk(params)
   }
 }

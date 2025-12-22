@@ -2,6 +2,7 @@
   <n-drawer :show="show" :width="720" placement="right" @update:show="$emit('update:show', $event)">
     <n-drawer-content title="工作流模板库">
       <div class="template-gallery">
+        <n-input v-model:value="search" placeholder="搜索模板名称或描述" clearable style="margin-bottom: 12px" />
         <!-- 分类标签 -->
         <n-tabs v-model:value="activeCategory" type="line" animated>
           <n-tab-pane
@@ -148,11 +149,13 @@ const activeCategory = ref('all')
 const categories = TEMPLATE_CATEGORIES
 
 // 筛选后的模板
+const search = ref('')
 const filteredTemplates = computed(() => {
-  if (activeCategory.value === 'all') {
-    return WORKFLOW_TEMPLATES
-  }
-  return WORKFLOW_TEMPLATES.filter(t => t.category === activeCategory.value)
+  const list = activeCategory.value === 'all' ? WORKFLOW_TEMPLATES : WORKFLOW_TEMPLATES.filter(t => t.category === activeCategory.value)
+  const q = search.value.trim().toLowerCase()
+  if (!q)
+    return list
+  return list.filter(t => `${t.name} ${t.description}`.toLowerCase().includes(q))
 })
 
 // 预览相关

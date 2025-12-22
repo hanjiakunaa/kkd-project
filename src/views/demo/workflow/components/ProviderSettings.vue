@@ -183,7 +183,20 @@ watch(() => props.show, (show) => {
         apiKeys.value[provider.id] = savedKey
       if (savedUrl)
         baseUrls.value[provider.id] = savedUrl
+      // 未配置则填充默认值，避免显示其他厂商的地址
+      if (!baseUrls.value[provider.id])
+        baseUrls.value[provider.id] = provider.baseUrl
+      if (!apiKeys.value[provider.id])
+        apiKeys.value[provider.id] = ''
     })
+  }
+})
+
+// 切换服务商时，如果当前服务商未配置 Base URL，则填充默认值
+watch(activeTab, (id) => {
+  const p = providers.find(x => x.id === id)
+  if (p && !baseUrls.value[id]) {
+    baseUrls.value[id] = p.baseUrl
   }
 })
 

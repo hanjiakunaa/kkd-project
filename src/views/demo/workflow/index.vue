@@ -30,6 +30,20 @@
           </template>
           适配视图
         </n-button>
+        <n-button size="small" tertiary @click="autoLayout">
+          <template #icon>
+            <h-icon name="ri-layout-grid-line" />
+          </template>
+          自动布局
+        </n-button>
+        <n-switch v-model:value="useStream" size="small" :round="false" style="margin-right: 8px">
+          <template #checked>
+            流式
+          </template>
+          <template #unchecked>
+            非流
+          </template>
+        </n-switch>
         <n-button size="small" tertiary :loading="isRunning" :disabled="isRunning" @click="runWorkflow">
           <template #icon>
             <h-icon name="ri-play-circle-line" />
@@ -38,6 +52,7 @@
         </n-button>
       </div>
       <div class="toolbar-right">
+        <n-progress type="line" :percentage="progressPercent" indicator-placement="inside" style="width: 180px" />
         <n-button size="small" tertiary @click="showSaveDialog">
           <template #icon>
             <h-icon name="hi-save-as" />
@@ -85,7 +100,7 @@
     >
       <background :gap="15" :size="1" pattern-color="#BDBDBD" />
       <template #node-special="props">
-        <special-node v-bind="props" />
+        <special-node v-bind="props" @run-node="runNodeById" @view-logs="openLogsForNode" />
       </template>
       <template #edge-special="props">
         <special-edge v-bind="props" />
@@ -108,12 +123,55 @@
     <n-drawer v-model:show="inspectorOpen" :width="380" placement="right">
       <n-drawer-content title="节点属性">
         <n-form v-if="selectedNode" label-placement="top">
+          <n-alert v-if="getNodeIssues(selectedNode).length" type="warning" style="margin-bottom: 8px">
+            缺少: {{ getNodeIssues(selectedNode).join('，') }}
+            <n-button size="tiny" type="primary" style="margin-left:8px" @click="fixNodeIssues">
+              一键修复
+            </n-button>
+          </n-alert>
           <n-form-item label="标题">
             <n-input v-model:value="selectedNode.data.title" />
           </n-form-item>
           <n-form-item label="描述">
             <n-input v-model:value="selectedNode.data.description" type="textarea" :rows="2" />
           </n-form-item>
+
+          <!-- 输入节点配置：支持文本/图片上传 -->
+          <template v-if="selectedNode.data.type === 'input-node'">
+            <n-form-item label="输入类型">
+              <n-select
+                v-model:value="selectedNode.data.params.schema"
+                :options="[
+                  { label: '文本', value: 'text' },
+                  { label: '图片', value: 'image' },
+                ]"
+              />
+            </n-form-item>
+            <template v-if="selectedNode.data.params.schema === 'text'">
+              <n-form-item label="文本输入">
+                <n-input
+                  v-model:value="selectedNode.data.variables.input"
+                  type="textarea"
+                  :rows="3"
+                  placeholder="请输入起始输入文本"
+                />
+              </n-form-item>
+            </template>
+            <template v-else>
+              <n-form-item label="图片URL">
+                <n-input
+                  v-model:value="selectedNode.data.variables.input"
+                  placeholder="粘贴图片URL，或下方上传文件"
+                />
+              </n-form-item>
+              <n-form-item label="上传图片文件">
+                <input type="file" accept="image/*" @change="onImageFileChange">
+              </n-form-item>
+              <n-form-item v-if="selectedNode.data.variables.input" label="预览">
+                <n-image :src="selectedNode.data.variables.input" style="max-width: 100%; border-radius: 8px;" />
+              </n-form-item>
+            </template>
+          </template>
 
           <!-- LLM 节点配置 -->
           <template v-if="selectedNode.data.type === 'llm-node'">
@@ -122,6 +180,13 @@
                 v-model:value="selectedNode.data.params.provider"
                 :options="chatProviders"
                 @update:value="onProviderChange"
+              />
+            </n-form-item>
+            <n-form-item label="提示词预设">
+              <n-select
+                v-model:value="selectedNode.data.params.preset"
+                :options="LLM_PROMPT_PRESETS.map(p => ({ label: p.label, value: p.value }))"
+                @update:value="applyLlmPreset"
               />
             </n-form-item>
             <n-form-item label="模型">
@@ -159,11 +224,71 @@
                 :options="getCurrentModels('image')"
               />
             </n-form-item>
+            <n-form-item label="提示词">
+              <n-input
+                v-model:value="selectedNode.data.params.prompt"
+                type="textarea"
+                :rows="3"
+                placeholder="请输入图片生成提示词，不填则使用上游输入"
+              />
+            </n-form-item>
             <n-form-item label="尺寸">
               <n-select
                 v-model:value="selectedNode.data.params.size"
                 :options="imageSizes"
               />
+            </n-form-item>
+          </template>
+
+          <!-- OCR 节点配置 -->
+          <template v-if="selectedNode.data.type === 'ocr-node'">
+            <n-form-item label="OCR 服务商">
+              <n-select
+                v-model:value="selectedNode.data.params.provider"
+                :options="[
+                  { label: '阿里通义', value: 'qwen' },
+                  { label: '百度 OCR', value: 'baidu' },
+                  { label: '智谱 AI', value: 'zhipu' },
+                  { label: 'OpenAI', value: 'openai' },
+                ]"
+              />
+            </n-form-item>
+            <n-form-item label="识别语言">
+              <n-select
+                v-model:value="selectedNode.data.params.language"
+                :options="[
+                  { label: '自动检测', value: 'auto' },
+                  { label: '中文', value: 'zh' },
+                  { label: '英文', value: 'en' },
+                  { label: '中英混合', value: 'zh_en' },
+                ]"
+              />
+            </n-form-item>
+            <n-form-item label="输出格式">
+              <n-select
+                v-model:value="selectedNode.data.params.outputFormat"
+                :options="[
+                  { label: '纯文本', value: 'text' },
+                  { label: 'JSON', value: 'json' },
+                  { label: 'Markdown', value: 'markdown' },
+                ]"
+              />
+            </n-form-item>
+            <n-form-item v-if="selectedNode.data.params.provider === 'baidu'" label="识别表格">
+              <n-switch v-model:value="selectedNode.data.params.detectTable" />
+            </n-form-item>
+            <n-divider />
+            <n-form-item label="图片URL">
+              <n-input
+                v-model:value="selectedNode.data.variables.input"
+                placeholder="粘贴图片URL，或下方上传文件"
+              />
+            </n-form-item>
+            <n-form-item label="上传图片文件">
+              <input type="file" accept="image/*" @change="onOcrFileChange">
+            </n-form-item>
+            <n-form-item v-if="selectedNode.data.variables.input" label="预览">
+              <n-image :src="selectedNode.data.variables.input" style="max-width: 100%; border-radius: 8px;" />
             </n-form-item>
           </template>
 
@@ -189,6 +314,18 @@
               <n-select
                 v-model:value="selectedNode.data.params.resolution"
                 :options="videoResolutions"
+              />
+            </n-form-item>
+          </template>
+
+          <!-- 视觉理解节点配置 -->
+          <template v-if="selectedNode.data.type === 'vision-node'">
+            <n-form-item label="提示词">
+              <n-input
+                v-model:value="selectedNode.data.params.prompt"
+                type="textarea"
+                :rows="3"
+                placeholder="请填写图片分析提示词"
               />
             </n-form-item>
           </template>
@@ -303,12 +440,20 @@
           </template>
 
           <!-- 删除节点按钮 -->
-          <n-button type="error" block style="margin-top: 16px;" @click="deleteNode">
-            <template #icon>
-              <h-icon name="ri-delete-bin-line" />
-            </template>
-            删除节点
-          </n-button>
+          <n-space vertical>
+            <n-button type="primary" block style="margin-top: 8px;" @click="runSelectedNode">
+              <template #icon>
+                <h-icon name="ri-play-mini-fill" />
+              </template>
+              试跑该节点
+            </n-button>
+            <n-button type="error" block style="margin-top: 8px;" @click="deleteNode">
+              <template #icon>
+                <h-icon name="ri-delete-bin-line" />
+              </template>
+              删除节点
+            </n-button>
+          </n-space>
         </n-form>
       </n-drawer-content>
     </n-drawer>
@@ -348,6 +493,17 @@
             :time="log.startTime"
           >
             <div class="log-content">
+              <n-space :size="8" style="margin-bottom: 6px">
+                <n-tag size="small" :bordered="false" type="info">
+                  状态: {{ log.status || (log.error ? 'error' : 'success') }}
+                </n-tag>
+                <n-tag v-if="Number(log.retryCount) > 0" size="small" :bordered="false" type="warning">
+                  重试: {{ log.retryCount }}
+                </n-tag>
+                <n-tag size="small" :bordered="false">
+                  耗时: {{ log.duration }}ms
+                </n-tag>
+              </n-space>
               <div v-if="log.params" class="log-params">
                 <strong>参数:</strong> {{ JSON.stringify(log.params) }}
               </div>
@@ -359,9 +515,6 @@
               </div>
               <div v-if="log.error" class="log-error">
                 <strong>错误:</strong> {{ log.error }}
-              </div>
-              <div class="log-duration">
-                <strong>耗时:</strong> {{ log.duration }}ms
               </div>
             </div>
           </n-timeline-item>
@@ -383,6 +536,7 @@ import TemplateGallery from './components/TemplateGallery.vue'
 import WorkflowManager from './components/WorkflowManager.vue'
 import { getModels } from './config/models'
 import { getNodeConfig } from './config/node-types'
+import { LLM_PROMPT_PRESETS } from './config/presets'
 import { AI_PROVIDERS, getProvidersByCapability } from './config/providers'
 import { WorkflowExecutor } from './engine/executor'
 import { workflowStorage } from './utils/storage'
@@ -459,6 +613,16 @@ const selectedNode = computed(() => nodes.value.find(n => n.id === selectedNodeI
 const isRunning = ref(false)
 const executionLogs = ref([])
 const executor = new WorkflowExecutor()
+const useStream = ref(false)
+const progressPercent = computed(() => {
+  const total = nodes.value.length
+  if (!total)
+    return 0
+  const done = nodes.value.filter(n => n.data.status === 'done').length
+  const running = nodes.value.filter(n => n.data.status === 'running').length
+  const percent = Math.min(100, Math.round(((done + running * 0.5) / total) * 100))
+  return percent
+})
 
 // 服务商配置
 const providerConfig = ref({
@@ -480,6 +644,10 @@ function loadProviderConfig() {
     }
     if (savedUrl) {
       baseUrls[providerId] = savedUrl
+    }
+    // 若未配置，则使用默认 Base URL，避免显示其它厂商地址
+    if (!baseUrls[providerId]) {
+      baseUrls[providerId] = AI_PROVIDERS[providerId].baseUrl
     }
   })
 
@@ -563,6 +731,109 @@ function onProviderChange() {
       selectedNode.value.data.params.model = models[0].value
     }
   }
+}
+
+function onImageFileChange(e) {
+  const file = e.target?.files?.[0]
+  if (!file)
+    return
+  const reader = new FileReader()
+  reader.onload = () => {
+    if (!selectedNode.value)
+      return
+    if (!selectedNode.value.data.variables)
+      selectedNode.value.data.variables = {}
+    selectedNode.value.data.variables.input = String(reader.result)
+    selectedNode.value.data.params.fileName = file.name
+    window.$message?.success('图片已读取')
+  }
+  reader.onerror = () => {
+    window.$message?.error('图片读取失败')
+  }
+  reader.readAsDataURL(file)
+}
+
+function onOcrFileChange(e) {
+  const file = e.target?.files?.[0]
+  if (!file)
+    return
+  const reader = new FileReader()
+  reader.onload = () => {
+    if (!selectedNode.value)
+      return
+    if (!selectedNode.value.data.variables)
+      selectedNode.value.data.variables = {}
+    selectedNode.value.data.variables.input = String(reader.result)
+    selectedNode.value.data.params.fileName = file.name
+    window.$message?.success('图片已读取')
+  }
+  reader.onerror = () => {
+    window.$message?.error('图片读取失败')
+  }
+  reader.readAsDataURL(file)
+}
+function applyLlmPreset(val) {
+  const p = LLM_PROMPT_PRESETS.find(x => x.value === val)
+  if (p && selectedNode.value) {
+    selectedNode.value.data.params.systemPrompt = p.prompt
+  }
+}
+
+function getNodeIssues(node) {
+  const issues = []
+  const t = node.data.type
+  const p = node.data.params || {}
+  if (t === 'llm-node' || t === 'image-gen-node' || t === 'video-gen-node') {
+    if (!p.provider)
+      issues.push('服务商')
+    if (!p.model)
+      issues.push('模型')
+  }
+  if (t === 'ocr-node') {
+    if (!p.provider)
+      issues.push('服务商')
+    const incoming = edges.value.filter(e => e.target === node.id)
+    if (incoming.length === 0 && !node.data?.variables?.input)
+      issues.push('图片输入')
+  }
+  return issues
+}
+
+function fixNodeIssues() {
+  if (!selectedNode.value)
+    return
+  const n = selectedNode.value
+  const t = n.data.type
+  if (t === 'llm-node') {
+    if (!n.data.params.provider)
+      n.data.params.provider = chatProviders.value[0]?.value
+    const models = getCurrentModels('chat')
+    if (!n.data.params.model && models.length)
+      n.data.params.model = models[0].value
+  }
+  else if (t === 'image-gen-node') {
+    if (!n.data.params.provider)
+      n.data.params.provider = imageProviders.value[0]?.value
+    const models = getCurrentModels('image')
+    if (!n.data.params.model && models.length)
+      n.data.params.model = models[0].value
+  }
+  else if (t === 'video-gen-node') {
+    if (!n.data.params.provider)
+      n.data.params.provider = videoProviders.value[0]?.value
+    const models = getCurrentModels('video')
+    if (!n.data.params.model && models.length)
+      n.data.params.model = models[0].value
+  }
+  else if (t === 'ocr-node') {
+    if (!n.data.params.provider)
+      n.data.params.provider = 'qwen'
+    if (!n.data.variables)
+      n.data.variables = {}
+    if (!n.data.variables.input)
+      n.data.variables.input = ''
+  }
+  window.$message?.success('已应用默认配置')
 }
 
 function handlePaneReady(instance) {
@@ -669,6 +940,49 @@ function deleteNode() {
   inspectorOpen.value = false
 }
 
+async function runSelectedNode() {
+  if (!selectedNode.value)
+    return
+  const node = selectedNode.value
+  const exec = new WorkflowExecutor({ enableRetry: true, enableStream: useStream.value })
+  const input = (() => {
+    const incoming = edges.value.filter(e => e.target === node.id)
+    if (incoming.length === 0) {
+      return nodes.value.find(n => n.data.type === 'input-node')?.data?.variables?.input || ''
+    }
+    if (incoming.length === 1) {
+      const srcId = incoming[0].source
+      const src = nodes.value.find(n => n.id === srcId)
+      return src?.data?.variables?.output || ''
+    }
+    return incoming.map(e => nodes.value.find(n => n.id === e.source)?.data?.variables?.output || '').filter(Boolean).join('\n')
+  })()
+  const context = {
+    apiKeys: providerConfig.value.apiKeys,
+    baseUrls: providerConfig.value.baseUrls,
+    getApiKey: p => providerConfig.value.apiKeys[p],
+    getBaseUrl: p => providerConfig.value.baseUrls[p],
+    defaultInput: input,
+    strictMode: false,
+  }
+  try {
+    node.data.status = 'running'
+    const executor = (await import('./executors')).getExecutor(node.data.type)
+    const renderedInput = String(input)
+    const output = await executor.execute(node, renderedInput, context)
+    node.data.status = 'done'
+    node.data.variables = node.data.variables || {}
+    node.data.variables.output = (typeof output === 'object')
+      ? (output.markdown || JSON.stringify(output, null, 2))
+      : String(output)
+    window.$message?.success('节点试跑完成')
+  }
+  catch (e) {
+    node.data.status = 'failed'
+    window.$message?.error(`试跑失败: ${e.message}`)
+  }
+}
+
 // 加载模板
 function loadTemplate(template) {
   if (!template || !template.workflow) {
@@ -704,18 +1018,19 @@ function applyTemplate(template) {
 
     // 获取默认配置作为基础
     const defaultConfig = getNodeConfig(systemType) || {}
+    const tplData = node.data || {}
 
     // 合并配置：优先使用模板中的配置，缺失的使用默认配置
     const nodeData = {
       type: systemType, // 使用系统节点类型
-      title: node.data.label || node.data.title || defaultConfig.title || '未命名节点',
-      description: node.data.description || defaultConfig.description || '',
+      title: tplData.label || tplData.title || defaultConfig.title || '未命名节点',
+      description: tplData.description || defaultConfig.description || '',
       icon: defaultConfig.icon || getNodeTypeIcon(node.type),
       params: {
-        ...defaultConfig.params, // 先应用默认参数
-        ...node.data.params, // 再应用模板参数（覆盖默认值）
+        ...(defaultConfig.params || {}),
+        ...(tplData.params || {}),
       },
-      variables: node.data.variables || {},
+      variables: tplData.variables || {},
       status: 'idle',
     }
 
@@ -797,6 +1112,39 @@ function alignLinear() {
   })
 }
 
+function autoLayout() {
+  const levelMap = new Map()
+  const inDegree = new Map()
+  nodes.value.forEach(n => inDegree.set(n.id, 0))
+  edges.value.forEach(e => inDegree.set(e.target, (inDegree.get(e.target) || 0) + 1))
+  const queue = nodes.value.filter(n => inDegree.get(n.id) === 0).map(n => n.id)
+  queue.forEach(id => levelMap.set(id, 0))
+  while (queue.length) {
+    const id = queue.shift()
+    const lvl = levelMap.get(id) || 0
+    edges.value.filter(e => e.source === id).forEach((e) => {
+      const nextLvl = Math.max(lvl + 1, levelMap.get(e.target) ?? 0)
+      levelMap.set(e.target, nextLvl)
+      queue.push(e.target)
+    })
+  }
+  const colSpacing = 300
+  const rowSpacing = 220
+  const columns = new Map()
+  nodes.value.forEach((n) => {
+    const lvl = levelMap.get(n.id) || 0
+    if (!columns.has(lvl))
+      columns.set(lvl, [])
+    columns.get(lvl).push(n)
+  })
+  columns.forEach((arr, lvl) => {
+    arr.forEach((n, idx) => {
+      n.position = { x: 120 + lvl * colSpacing, y: 120 + idx * rowSpacing }
+    })
+  })
+  nextTick(() => handleFit())
+}
+
 // 运行工作流
 async function runWorkflow() {
   if (isRunning.value)
@@ -832,7 +1180,7 @@ async function runWorkflow() {
       },
     }
 
-    // 调试日志：输出当前配置
+    executor.options.enableStream = useStream.value
     console.warn('[Workflow] 执行上下文配置:', {
       apiKeys: Object.keys(context.apiKeys),
       baseUrls: Object.keys(context.baseUrls),
@@ -849,6 +1197,16 @@ async function runWorkflow() {
       const node = nodes.value.find(n => n.id === nodeId)
       if (node)
         node.data.status = 'done'
+    })
+
+    executor.on('streamChunk', ({ nodeId, chunk }) => {
+      const node = nodes.value.find(n => n.id === nodeId)
+      if (!node)
+        return
+      if (!node.data.variables)
+        node.data.variables = {}
+      const prev = node.data.variables.output || ''
+      node.data.variables.output = String(prev) + String(chunk)
     })
 
     executor.on('nodeError', ({ nodeId, error }) => {
@@ -1514,3 +1872,11 @@ useEventListener(window, 'keydown', (e) => {
 @import '@vue-flow/core/dist/style.css';
 @import '@vue-flow/core/dist/theme-default.css';
 </style>
+function runNodeById(id) {
+  selectedNodeId.value = id
+  runSelectedNode()
+}
+
+function openLogsForNode(id) {
+  logsOpen.value = true
+}

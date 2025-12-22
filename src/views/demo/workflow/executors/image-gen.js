@@ -34,8 +34,11 @@ export class ImageGenExecutor extends BaseExecutor {
     // 创建适配器
     const adapter = createAdapter(provider, { apiKey, baseUrl })
 
-    // 生成图片
-    const prompt = String(input)
+    // 生成图片：优先使用节点内的提示词，否则使用上游输入
+    let prompt = node.data.params?.prompt ? String(node.data.params.prompt) : String(input)
+    if (!prompt || !String(prompt).trim()) {
+      prompt = String(context?.defaultInput || '高质感产品宣传图，居中主体，柔和光影，清晰背景')
+    }
     const options = {
       model,
       size: size || '1024x1024',
@@ -102,4 +105,3 @@ export class ImageGenExecutor extends BaseExecutor {
     return String(output)
   }
 }
-

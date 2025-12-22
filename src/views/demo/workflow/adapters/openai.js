@@ -28,23 +28,16 @@ export class OpenAIAdapter extends BaseAdapter {
       presence_penalty: options.presencePenalty,
     }
 
-    // 直接调用 API
-    const response = await fetch(url, {
+    const response = await this._proxyRequest(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${this.apiKey}`,
       },
-      body: JSON.stringify(payload),
+      body: payload,
     })
 
-    if (!response.ok) {
-      const errorText = await response.text()
-      throw new Error(`OpenAI API 错误 ${response.status}: ${errorText}`)
-    }
-
-    const data = await response.json()
-    return data.choices?.[0]?.message?.content || ''
+    return response.data?.choices?.[0]?.message?.content || ''
   }
 
   /**

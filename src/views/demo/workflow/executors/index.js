@@ -42,7 +42,7 @@ const EXECUTORS = {
 
   'text-process-node': class TextProcessExecutor extends BaseExecutor {
     async execute(node, input) {
-      const { operation } = node.data.params
+      const { operation, pattern } = node.data.params
       const text = String(input)
 
       switch (operation) {
@@ -56,6 +56,24 @@ const EXECUTORS = {
           return text.split('').reverse().join('')
         case 'length':
           return `文本长度: ${text.length} 个字符`
+        case 'extract': {
+          if (!pattern)
+            return text
+          try {
+            const re = new RegExp(pattern, 'ms')
+            const m = text.match(re)
+            return m && (m[1] || m[0]) ? String(m[1] || m[0]).trim() : text
+          }
+          catch {
+            return text
+          }
+        }
+        case 'stripCode': {
+          // 移除三引号代码块与行内反引号
+          let out = text.replace(/```[\s\S]*?```/g, '')
+          out = out.replace(/`[^`]*`/g, '')
+          return out
+        }
         default:
           return text
       }

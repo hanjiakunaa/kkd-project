@@ -32,7 +32,8 @@ export class OCRExecutor extends BaseExecutor {
 
     try {
       // 验证输入
-      if (!input) {
+      const actualInput = input || node.data?.variables?.input
+      if (!actualInput) {
         throw new Error('请提供图片URL或base64数据')
       }
 
@@ -43,7 +44,7 @@ export class OCRExecutor extends BaseExecutor {
       }
 
       // 处理输入
-      const imageUrl = this.processImageInput(input)
+      const imageUrl = this.processImageInput(actualInput)
 
       // 根据服务商调用不同的 OCR API
       let result
@@ -374,4 +375,3 @@ export class OCRExecutor extends BaseExecutor {
     }
   }
 }
-

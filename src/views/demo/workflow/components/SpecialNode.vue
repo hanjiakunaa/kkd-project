@@ -38,6 +38,14 @@ const isGroup = computed(() => props.data?.type === 'group-node')
       <div v-if="data?.params" class="node-tags">
         <span v-for="(v, k, i) in data.params" v-show="i < 3" :key="k" class="tag">{{ k }}</span>
       </div>
+      <div class="node-actions">
+        <n-button size="tiny" type="primary" @click="$emit('run-node', id)">
+          试跑
+        </n-button>
+        <n-button size="tiny" quaternary @click="$emit('view-logs', id)">
+          日志
+        </n-button>
+      </div>
     </div>
     <!-- 句柄：普通节点顶部/底部；工作组左/右 -->
     <handle v-if="!isGroup" id="in" type="target" :position="Position.Top" />
@@ -63,6 +71,25 @@ const isGroup = computed(() => props.data?.type === 'group-node')
   transition:
     box-shadow 0.2s ease,
     border-color 0.2s ease;
+}
+.node-card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  border-radius: 10px 0 0 10px;
+  background: #eef2ff;
+}
+.status-running.node-card::before {
+  background: #fde68a;
+}
+.status-done.node-card::before {
+  background: #d1fae5;
+}
+.status-failed.node-card::before {
+  background: #fecaca;
 }
 
 .node-card.type-group-node {
@@ -123,6 +150,16 @@ const isGroup = computed(() => props.data?.type === 'group-node')
   display: flex;
   gap: 6px;
   flex-wrap: wrap;
+}
+.node-actions {
+  display: flex;
+  gap: 6px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  margin-top: 8px;
+}
+.node-card:hover .node-actions {
+  opacity: 1;
 }
 .tag {
   font-size: 11px;

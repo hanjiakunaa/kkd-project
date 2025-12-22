@@ -34,12 +34,13 @@ export class LLMExecutor extends BaseExecutor {
     // 创建适配器
     const adapter = createAdapter(provider, { apiKey, baseUrl })
 
-    // 构建消息
+    // 构建消息（确保 user 内容非空）
+    const userContent = String(input || '').trim() || context.defaultInput || '你好，请介绍一下你自己。'
     const messages = []
     if (systemPrompt) {
       messages.push({ role: 'system', content: systemPrompt })
     }
-    messages.push({ role: 'user', content: String(input) })
+    messages.push({ role: 'user', content: userContent })
 
     // 调用 AI
     const options = {
@@ -92,4 +93,3 @@ export class LLMExecutor extends BaseExecutor {
     return 3000 // 3 秒
   }
 }
-
