@@ -13,6 +13,7 @@ import VueDevTools from 'vite-plugin-vue-devtools'
 import { pluginIcons, pluginPagePathes } from './build/plugin-isme'
 import { getDevProxyConfig } from './build/proxy-config'
 import { registerLocalProxy } from './build/server-proxy'
+import { createViteOptimizer } from './build/vite-optimizer'
 
 export default defineConfig(({ mode }) => {
   const viteEnv = loadEnv(mode, process.cwd())
@@ -20,11 +21,19 @@ export default defineConfig(({ mode }) => {
   const isDev = mode === 'development'
   const isProd = mode === 'production'
 
+  // 使用优化器配置
+  const optimizer = createViteOptimizer(viteEnv, mode)
+
   return {
     base: VITE_PUBLIC_PATH || '/',
-    filenameHashing: true,
     plugins: [
-      Vue(),
+      Vue({
+        script: {
+          // 启用响应式语法糖
+          defineModel: true,
+          propsDestructure: true,
+        },
+      }),
       VueJsx(),
       ...(isDev ? [VueDevTools()] : []),
       Unocss(),
@@ -46,6 +55,49 @@ export default defineConfig(({ mode }) => {
           maximumFileSizeToCacheInBytes: 10485760,
           clientsClaim: true,
           skipWaiting: true,
+          // 添加运行时缓存策略
+          runtimeCaching: [
+            {
+              urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'google-fonts-cache',
+                expiration: {
+                  maxEntries: 10,
+                  maxAgeSeconds: 60 * 60 * 24 * 365, // 1年
+                },
+                cacheableResponse: {
+                  statuses: [0, 200],
+                },
+              },
+            },
+            {
+              urlPattern: /^https:\/\/fonts\.gstatic\.com\/.*/i,
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'gstatic-fonts-cache',
+                expiration: {
+                  maxEntries: 10,
+                  maxAgeSeconds: 60 * 60 * 24 * 365, // 1年
+                },
+                cacheableResponse: {
+                  statuses: [0, 200],
+                },
+              },
+            },
+            {
+              urlPattern: /\/api\/.*/i,
+              handler: 'NetworkFirst',
+              options: {
+                cacheName: 'api-cache',
+                expiration: {
+                  maxEntries: 50,
+                  maxAgeSeconds: 60 * 5, // 5分钟
+                },
+                networkTimeoutSeconds: 10,
+              },
+            },
+          ],
         },
         includeAssets: ['favicon.png'],
         manifest: {
@@ -82,93 +134,18 @@ export default defineConfig(({ mode }) => {
           })]
         : []),
     ],
-    resolve: {
-      alias: {
-        '@': path.resolve(process.cwd(), 'src'),
-        '~': path.resolve(process.cwd()),
-      },
-      dedupe: ['vue', 'vue-router'],
-    },
+    // 使用优化器的配置
+    resolve: optimizer.resolve,
     define: {
       __VUE_PROD_DEVTOOLS__: false,
     },
-    esbuild: {
-      target: 'es2019',
-      ...(isProd ? { drop: ['console', 'debugger'] } : {}),
-    },
-    server: {
-      host: '0.0.0.0',
-      port: 3200,
-      open: true,
-      proxy: {
-        '/api': getDevProxyConfig(VITE_PROXY_TARGET),
-      },
-    },
+    esbuild: optimizer.esbuild,
+    server: optimizer.server,
     configureServer: (server) => {
       registerLocalProxy(server, { route: '/api/proxy' })
     },
-    optimizeDeps: {
-      exclude: ['mammoth'],
-      include: [
-        'lodash-es',
-        'dayjs',
-        'axios',
-        'pinia',
-        '@vueuse/core',
-        'naive-ui',
-        'echarts',
-        'vue-echarts',
-        'codemirror',
-        'pdfjs-dist',
-        'xlsx',
-        'oh-vue-icons',
-      ],
-      esbuildOptions: {
-        target: 'es2019',
-      },
-    },
-    build: {
-      chunkSizeWarningLimit: 2048, // chunk 大小警告的限制（单位kb）
-      rollupOptions: {
-        output: {
-          manualChunks(id) {
-            if (id.includes('node_modules')) {
-              if (id.includes('/vue/') || id.includes('vue-router') || id.includes('/pinia/'))
-                return 'vue'
-              if (id.includes('naive-ui'))
-                return 'naive'
-              if (id.includes('/echarts') || id.includes('vue-echarts'))
-                return 'echarts'
-              if (id.includes('codemirror') || id.includes('@codemirror'))
-                return 'codemirror'
-              if (id.includes('pdfjs-dist'))
-                return 'pdf'
-              if (id.includes('xlsx'))
-                return 'xlsx'
-              if (id.includes('lodash-es'))
-                return 'lodash'
-              if (id.includes('dayjs'))
-                return 'dayjs'
-              if (id.includes('/axios'))
-                return 'axios'
-              if (id.includes('@vueuse'))
-                return 'vueuse'
-              if (id.includes('oh-vue-icons'))
-                return 'icons'
-              if (id.includes('@vue-flow'))
-                return 'flow'
-              return 'vendor'
-            }
-          },
-          entryFileNames: 'assets/[name].[hash].js',
-          chunkFileNames: 'assets/[name].[hash].js',
-          assetFileNames: 'assets/[name].[hash].[ext]',
-        },
-        external: ['mammoth'], // 排除 mammoth，避免预构建错误
-      },
-      target: 'es2019',
-      minify: 'esbuild',
-      modulePreload: { polyfill: true },
-    },
+    optimizeDeps: optimizer.optimizeDeps,
+    build: optimizer.build,
+    worker: optimizer.worker,
   }
 })

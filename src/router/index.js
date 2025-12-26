@@ -1,4 +1,5 @@
 import { createRouter, createWebHashHistory, createWebHistory } from 'vue-router'
+import { setupRouteOptimizer } from '@/utils/route-optimizer'
 import { basicRoutes } from './basic-routes'
 import { setupRouterGuards } from './guards'
 
@@ -14,4 +15,6 @@ export const router = createRouter({
 export async function setupRouter(app) {
   app.use(router)
   setupRouterGuards(router)
+  // 启用路由优化和预加载
+  setupRouteOptimizer(router)
 }

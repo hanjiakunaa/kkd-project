@@ -1,0 +1,44 @@
+# HTTP 缓存策略配置（用于 Vercel、Netlify 等平台）
+
+# HTML - 不缓存，总是获取最新版本
+/*.html
+  Cache-Control: no-cache, no-store, must-revalidate
+  
+/
+  Cache-Control: no-cache, no-store, must-revalidate
+
+# JavaScript 和 CSS - 长期缓存（带 hash）
+/assets/js/*.js
+  Cache-Control: public, max-age=31536000, immutable
+
+/assets/css/*.css
+  Cache-Control: public, max-age=31536000, immutable
+
+# 图片资源 - 长期缓存
+/assets/images/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# 字体文件 - 长期缓存
+/assets/fonts/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Service Worker - 不缓存
+/sw.js
+  Cache-Control: no-cache, no-store, must-revalidate
+
+/workbox-*.js
+  Cache-Control: no-cache, no-store, must-revalidate
+
+# Favicon 和静态资源
+/*.png
+  Cache-Control: public, max-age=86400
+
+/*.ico
+  Cache-Control: public, max-age=86400
+
+/*.svg
+  Cache-Control: public, max-age=86400
+
+# API 响应 - 短期缓存
+/api/*
+  Cache-Control: public, max-age=300, s-maxage=300

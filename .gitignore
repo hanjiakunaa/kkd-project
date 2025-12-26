@@ -1,6 +1,7 @@
 *.local
 node_modules
 dist
+dev-dist
 stats.html
 .env
 /.cursor/

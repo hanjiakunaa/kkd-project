@@ -9,6 +9,7 @@ import { setupPwa } from './plugins/pwa'
 import { setupRouter } from './router'
 import { setupStore } from './store'
 import { setupNaiveDiscreteApi } from './utils'
+import { setupPerformanceMonitor } from './utils/performance-monitor'
 import '@/styles/reset.css'
 import '@/styles/global.css'
 import 'uno.css'
@@ -27,6 +28,9 @@ if (import.meta.env.DEV) {
 }
 
 async function bootstrap() {
+  // 标记应用启动开始
+  performance?.mark('app-start')
+
   const app = createApp(App)
 
   // 挂载 screenfull 到全局属性
@@ -39,9 +43,35 @@ async function bootstrap() {
   setupStore(app)
   setupDirectives(app)
   await setupRouter(app)
+
+  // 标记应用挂载开始
+  performance?.mark('app-mount-start')
   app.mount('#app')
+  performance?.mark('app-mount-end')
+
   setupNaiveDiscreteApi()
   setupPwa()
+
+  // 初始化性能监控
+  const monitor = setupPerformanceMonitor({
+    enableLogging: import.meta.env.DEV,
+    // reportEndpoint: '/api/performance', // 生产环境可以上报到后端
+  })
+
+  // 测量应用启动时间
+  if (performance?.mark) {
+    performance.mark('app-ready')
+    performance.measure('app-bootstrap', 'app-start', 'app-ready')
+    performance.measure('app-mount', 'app-mount-start', 'app-mount-end')
+
+    const bootstrap = performance.getEntriesByName('app-bootstrap')[0]
+    const mount = performance.getEntriesByName('app-mount')[0]
+
+    if (import.meta.env.DEV) {
+      console.log(`🚀 应用启动耗时: ${bootstrap.duration.toFixed(2)}ms`)
+      console.log(`📦 应用挂载耗时: ${mount.duration.toFixed(2)}ms`)
+    }
+  }
 }
 
 bootstrap()
